@@ -19,6 +19,13 @@
   28-05-2024
 *******************************************************************************/
 
+/* TODO
+
+Ditch `Adafruit_INA228.h`. Use Rob Tillaart's library instead at
+https://github.com/RobTillaart/INA228/tree/master
+Offers more control of conversion modes (V_bus and/or I_shunt and/or T_die).
+*/
+
 #include <Adafruit_INA228.h>
 
 const float R_SHUNT = 0.015; // [Ohm] Shunt resistor internal to Adafruit INA228
