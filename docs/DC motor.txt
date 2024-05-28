@@ -1,0 +1,34 @@
+In cheap wind turbine:
+
+https://nl.aliexpress.com/item/1005005779496275.html?spm=a2g0o.productlist.main.49.29ce3b95i0m4KI&algo_pvid=248ee1cd-36b8-4909-84e4-eef191d0f621&algo_exp_id=248ee1cd-36b8-4909-84e4-eef191d0f621-24&pdp_npi=4%40dis%21EUR%210.63%210.63%21%21%214.80%214.80%21%402103856417065398362911151e7d68%2112000034325953505%21sea%21NL%210%21AB&curPageLogUid=ZrHf58sOcm6b&utparam-url=scene%3Asearch%7Cquery_from%3A
+RF-300FA-12350 RF-300C Mini 300 Motor Dc 1.5V 3V 5V 6V 7700Rpm Micro 24Mm Ronde Spindel Motor Diy Hobby Speelgoed Zonne-Energie Model
+
+1. Model: RF-300FA-12350
+2. motordiameter: 24,2mm
+3. motorhoogte: 12,4mm
+4. diameter van de uitgangsas: 2,0mm
+5. De lengte van de outputschacht: 7.2mm
+6. Kabellengte: 160mm
+7. gewicht: 22g
+8. geschikt voltage: DC 1.5V-6.0V
+9. Testgegevens:
+
+Voltage:1.5V Snelheid zonder belasting: 1800RPM No-load stroom: 10mA
+Voltage:3.0V Snelheid zonder belasting: 3800RPM No-load stroom: 15mA
+Voltage:5.0V Snelheid zonder belasting: 6400RPM No-load stroom: 22mA
+Voltage:6.0V Snelheid zonder belasting: 7700RPM No-load stroom: 26mA
+
+https://nl.aliexpress.com/item/1005005779479881.html?spm=a2g0o.detail.pcDetailBottomMoreThisSeller.1.5706YWzbYWzbRD&gps-id=pcDetailBottomMoreThisSeller&scm=1007.13339.291025.0&scm_id=1007.13339.291025.0&scm-url=1007.13339.291025.0&pvid=7db08305-c298-4cbd-8c5a-2e431dc2f7cd&_t=gps-id:pcDetailBottomMoreThisSeller,scm-url:1007.13339.291025.0,pvid:7db08305-c298-4cbd-8c5a-2e431dc2f7cd,tpp_buckets:668%232846%238108%231977&pdp_npi=4%40dis%21EUR%210.62%210.62%21%21%214.69%214.69%21%40211b613117065399665248583efc08%2112000034326026864%21rec%21NL%21%21AB&utparam-url=scene%3ApcDetailBottomMoreThisSeller%7Cquery_from%3A
+RF-300FZ-12350 300 Mini 24Mm Elektromotor Dc 1.5V-6V 5.9V 7500Rpm Micro Ronde Spindel Motor Diy Zonne-Energie Hobby Speelgoed Model
+
+1. Model: RF-300FZ-12350
+2. motordiameter: 24,35mm
+3. motorhoogte: 12,3mm
+4. diameter van de uitgangsas: 2mm
+5. De lengte van de outputschacht: 5.25mm
+6. gewicht: 20g
+7. Spanningsbereik: DC 1.5V-6V
+8. Testgegevens:
+
+Voltage:3.0V Snelheid zonder belasting: 3750RPM Stroom: 14mA
+Voltage:6.0V Snelheid zonder belasting: 7500RPM Stroom: 20mA
