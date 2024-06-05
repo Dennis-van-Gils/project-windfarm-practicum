@@ -50,16 +50,24 @@
  * Allowed values for setMode.
  */
 typedef enum _mode {
-  INA228_MODE_SHUTDOWN = 0x00, /**< SHUTDOWN: Minimize quiescient current and
-                                turn off current into the device inputs. Set
-                                another mode to exit shutown mode **/
-  INA228_MODE_TRIGGERED =
-      0x07,                      /**< TRIGGERED: Trigger a one-shot measurement
-                                   of temp, current and bus voltage. Set the TRIGGERED
-                                   mode again to take a new measurement **/
-  INA228_MODE_CONTINUOUS = 0x0F, /**< CONTINUOUS: (Default) Continuously update
-                                    the temp, current, bus voltage and power
-                                    registers with new measurements **/
+  INA228_MODE_SHUTDOWN            = 0x00,
+  INA228_MODE_TRIG_BUS            = 0x01,
+  INA228_MODE_TRIG_SHUNT          = 0x02,
+  INA228_MODE_TRIG_BUS_SHUNT      = 0x03,
+  INA228_MODE_TRIG_TEMP           = 0x04,
+  INA228_MODE_TRIG_TEMP_BUS       = 0x05,
+  INA228_MODE_TRIG_TEMP_SHUNT     = 0x06,
+  INA228_MODE_TRIG_TEMP_BUS_SHUNT = 0x07,
+
+  INA228_MODE_SHUTDOWN2           = 0x08,
+  INA228_MODE_CONT_BUS            = 0x09,
+  INA228_MODE_CONT_SHUNT          = 0x0A,
+  INA228_MODE_CONT_BUS_SHUNT      = 0x0B,
+  INA228_MODE_CONT_TEMP           = 0x0C,
+  INA228_MODE_CONT_TEMP_BUS       = 0x0D,
+  INA228_MODE_CONT_TEMP_SHUNT     = 0x0E,
+  INA228_MODE_CONT_TEMP_BUS_SHUNT = 0x0F,
+  INA228_MODE_CONTINUOUS          = INA228_MODE_CONT_TEMP_BUS_SHUNT
 } INA228_MeasurementMode;
 
 /**
@@ -142,7 +150,9 @@ public:
              TwoWire *theWire = &Wire);
   void reset(void);
 
-  void setShunt(float shunt_res = 0.1, float max_current = 3.2);
+  void setShunt(float shunt_res = 0.015, float max_current = 10.,
+                uint8_t adc_range = 0);
+  uint8_t getADCRange(void);
   float readDieTemp(void);
 
   float readCurrent(void);
@@ -170,6 +180,8 @@ public:
   void setCurrentConversionTime(INA228_ConversionTime time);
   INA228_ConversionTime getVoltageConversionTime(void);
   void setVoltageConversionTime(INA228_ConversionTime time);
+  INA228_ConversionTime getTemperatureConversionTime(void);
+  void setTemperatureConversionTime(INA228_ConversionTime time);
   INA228_AveragingCount getAveragingCount(void);
   void setAveragingCount(INA228_AveragingCount count);
 
@@ -180,6 +192,7 @@ public:
 
 private:
   float _current_lsb;
+  uint8_t _adc_range;
   Adafruit_I2CDevice *i2c_dev;
 };
 

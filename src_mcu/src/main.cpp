@@ -16,20 +16,17 @@
 
   https://github.com/Dennis-van-Gils/project-windfarm-practicum
   Dennis van Gils
-  28-05-2024
+  05-06-2024
 *******************************************************************************/
-
-/* TODO
-
-Ditch `Adafruit_INA228.h`. Use Rob Tillaart's library instead at
-https://github.com/RobTillaart/INA228/tree/master
-Offers more control of conversion modes (V_bus and/or I_shunt and/or T_die).
-*/
 
 #include <Adafruit_INA228.h>
 
-const float R_SHUNT = 0.015; // [Ohm] Shunt resistor internal to Adafruit INA228
-const float MAX_CURRENT = 0.2; // [A] Maximum expected current
+// [Ohm] Shunt resistor internal to Adafruit INA228
+const float R_SHUNT = 0.015;
+// [A] Maximum expected current
+const float MAX_CURRENT = 0.2;
+// Shunt full scale ADC range. 0: +/-163.84 mV or 1: +/-40.96 mV.
+const uint8_t ADC_RANGE = 1;
 
 const uint32_t PERIOD = 500; // [ms]
 const int BUFLEN = 255;      // Length of general string buffer
@@ -56,16 +53,30 @@ void setup() {
 
   Serial.println("Found INA228 chip");
 
-  ina228.setShunt(R_SHUNT, MAX_CURRENT);
+  ina228.setShunt(R_SHUNT, MAX_CURRENT, ADC_RANGE);
+  ina228.setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
 
   // [#] 1, 4, 16, 64, 128, 256, 512, 1024
   ina228.setAveragingCount(INA228_COUNT_4);
 
   // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
-  ina228.setVoltageConversionTime(INA228_TIME_150_us);
   ina228.setCurrentConversionTime(INA228_TIME_150_us);
+  ina228.setVoltageConversionTime(INA228_TIME_150_us);
+  ina228.setTemperatureConversionTime(INA228_TIME_150_us);
 
-  ina228.setMode(INA228_MODE_TRIGGERED);
+  // Report settings to terminal
+  Serial.print("ADC range      : ");
+  Serial.println(ina228.getADCRange());
+  Serial.print("Mode           : ");
+  Serial.println(ina228.getMode());
+  Serial.print("Averaging count: ");
+  Serial.println(ina228.getAveragingCount());
+  Serial.print("Current     conversion time: ");
+  Serial.println(ina228.getCurrentConversionTime());
+  Serial.print("Voltage     conversion time: ");
+  Serial.println(ina228.getVoltageConversionTime());
+  Serial.print("Temperature conversion time: ");
+  Serial.println(ina228.getTemperatureConversionTime());
 }
 
 // -----------------------------------------------------------------------------
@@ -75,10 +86,12 @@ void setup() {
 void loop() {
   static uint32_t tick = micros();
   static uint32_t tick_print = micros();
-  float I;     // Current [mA]
-  float V_bus; // Bus voltage [mV]
-  float P;     // Power [mW]
-  float E;     // Energy [J]
+  float I;       // Current [mA]
+  float V_shunt; // Shunt voltage [mV]
+  float V_bus;   // Bus voltage [mV]
+  float P;       // Power [mW]
+  float E;       // Energy [J]
+  float T_die;   // Die temperature ['C]
   uint32_t now, DT;
 
   while (!ina228.conversionReady()) {
@@ -91,23 +104,30 @@ void loop() {
   // background. The upcoming `read...()` statements will still reflect the last
   // above `conversionReady()` state, provided the conversion times and
   // averaging count are chosen long enough.
-  ina228.setMode(INA228_MODE_TRIGGERED);
+  ina228.setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
 
   now = micros();
   DT = now - tick;
   tick = now;
 
-  I = ina228.readCurrent();        // [mA]
-  V_bus = ina228.readBusVoltage(); // [mV]
-  P = ina228.readPower();          // [mW]
-  E = ina228.readEnergy();         // [J]
+  I = ina228.readCurrent();            // [mA]
+  V_shunt = ina228.readShuntVoltage(); // [mV]
+  V_bus = ina228.readBusVoltage();     // [mV]
+  P = ina228.readPower();              // [mW]
+  E = ina228.readEnergy();             // [J]
+  T_die = ina228.readDieTemp();        // ['C]
 
   if (now - tick_print >= PERIOD * 1000) {
     tick_print = now;
     snprintf(buf, BUFLEN,
-             "DT = %4.2f ms | I = %5.1f mA | V = %6.1f mV | "
-             "P = %6.1f mW | E = %6.2f J",
-             DT / 1000., I, V_bus, P, E);
+             "DT = %4.2f ms | "
+             "I = %5.1f mA | "
+             "V_shunt = %6.2f mV | "
+             "V = %6.1f mV | "
+             "P = %6.1f mW | "
+             "E = %6.2f J | "
+             "T = %.1f 'C",
+             DT / 1000., I, V_shunt, V_bus, P, E, T_die);
     Serial.println(buf);
   }
 }
