@@ -49,7 +49,8 @@ Adafruit_INA228::Adafruit_INA228(void) {}
  *            The Wire object to be used for I2C connections.
  *    @return True if initialization was successful, otherwise false.
  */
-bool Adafruit_INA228::begin(uint8_t i2c_address, TwoWire *theWire) {
+bool Adafruit_INA228::begin(uint8_t i2c_address, TwoWire *theWire,
+                            bool skipReset) {
   i2c_dev = new Adafruit_I2CDevice(i2c_address, theWire);
 
   if (!i2c_dev->begin()) {
@@ -74,8 +75,10 @@ bool Adafruit_INA228::begin(uint8_t i2c_address, TwoWire *theWire) {
   Diag_Alert =
       new Adafruit_I2CRegister(i2c_dev, INA228_REG_DIAGALRT, 2, MSBFIRST);
 
-  reset();
-  delay(2); // delay 2ms to give time for first measurement to finish
+  if (!skipReset) {
+    reset();
+    delay(2); // delay 2ms to give time for first measurement to finish
+  }
   return true;
 }
 /**************************************************************************/
@@ -90,7 +93,7 @@ void Adafruit_INA228::reset(void) {
   Adafruit_I2CRegisterBits alert_conv =
       Adafruit_I2CRegisterBits(Diag_Alert, 1, 14);
   alert_conv.write(1);
-  setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
+  setMode(INA228_MODE_CONTINUOUS);
   getADCRange();
 }
 
@@ -129,7 +132,7 @@ void Adafruit_INA228::setShunt(float shunt_res, float max_current,
 }
 /**************************************************************************/
 /*!
-    @brief Reads the shunt full scale ADC range across IN+ and IN–.
+    @brief Reads the shunt full scale ADC range across IN+ and IN-.
     0: +/- 163.84 mV. 1: +/- 40.96 mV.
     @return ADC range (0 or 1)
 */
@@ -148,7 +151,8 @@ uint8_t Adafruit_INA228::getADCRange() {
 float Adafruit_INA228::readDieTemp(void) {
   Adafruit_I2CRegister temp =
       Adafruit_I2CRegister(i2c_dev, INA228_REG_DIETEMP, 2, MSBFIRST);
-  return (float)temp.read() * 7.8125 / 1000.0;
+  int16_t t = temp.read();
+  return (float)t * 7.8125 / 1000.0;
 }
 /**************************************************************************/
 /*!
