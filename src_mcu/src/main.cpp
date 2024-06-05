@@ -26,7 +26,7 @@ https://github.com/RobTillaart/INA228/tree/master
 Offers more control of conversion modes (V_bus and/or I_shunt and/or T_die).
 */
 
-#include <Adafruit_INA228.h>
+#include "INA228.h"
 
 const float R_SHUNT = 0.015; // [Ohm] Shunt resistor internal to Adafruit INA228
 const float MAX_CURRENT = 0.2; // [A] Maximum expected current
@@ -35,7 +35,7 @@ const uint32_t PERIOD = 500; // [ms]
 const int BUFLEN = 255;      // Length of general string buffer
 char buf[BUFLEN];            // General string buffer
 
-Adafruit_INA228 ina228 = Adafruit_INA228();
+INA228 INA(0x40);
 
 // -----------------------------------------------------------------------------
 //  setup
@@ -49,83 +49,83 @@ void setup() {
     delay(10);
   }
 
-  if (!ina228.begin()) {
+  Wire.begin();
+  if (!INA.begin()) {
     Serial.println("Couldn't find INA228 chip");
     while (1) {}
   }
 
   Serial.println("Found INA228 chip");
 
-  ina228.setShunt(R_SHUNT, MAX_CURRENT);
+  INA.setMaxCurrentShunt(MAX_CURRENT, R_SHUNT);
 
   // [#] 1, 4, 16, 64, 128, 256, 512, 1024
-  ina228.setAveragingCount(INA228_COUNT_4);
+  INA.setAverage(INA228_4_SAMPLES);
 
   // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
-  ina228.setVoltageConversionTime(INA228_TIME_150_us);
-
-  // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
-  ina228.setCurrentConversionTime(INA228_TIME_150_us);
+  INA.setBusVoltageConversionTime(INA228_150_us);
+  INA.setShuntVoltageConversionTime(INA228_150_us); // I.e. current
 
   Serial.print("Voltage conversion time: ");
-  switch (ina228.getVoltageConversionTime()) {
-    case INA228_TIME_50_us:
+  switch (INA.getBusVoltageConversionTime()) {
+    case INA228_50_us:
       Serial.print("50");
       break;
-    case INA228_TIME_84_us:
+    case INA228_84_us:
       Serial.print("84");
       break;
-    case INA228_TIME_150_us:
+    case INA228_150_us:
       Serial.print("150");
       break;
-    case INA228_TIME_280_us:
+    case INA228_280_us:
       Serial.print("280");
       break;
-    case INA228_TIME_540_us:
+    case INA228_540_us:
       Serial.print("540");
       break;
-    case INA228_TIME_1052_us:
+    case INA228_1052_us:
       Serial.print("1052");
       break;
-    case INA228_TIME_2074_us:
+    case INA228_2074_us:
       Serial.print("2074");
       break;
-    case INA228_TIME_4120_us:
+    case INA228_4120_us:
       Serial.print("4120");
       break;
   }
   Serial.println(" us");
 
   Serial.print("Current conversion time: ");
-  switch (ina228.getCurrentConversionTime()) {
-    case INA228_TIME_50_us:
+  switch (INA.getShuntVoltageConversionTime()) {
+    case INA228_50_us:
       Serial.print("50");
       break;
-    case INA228_TIME_84_us:
+    case INA228_84_us:
       Serial.print("84");
       break;
-    case INA228_TIME_150_us:
+    case INA228_150_us:
       Serial.print("150");
       break;
-    case INA228_TIME_280_us:
+    case INA228_280_us:
       Serial.print("280");
       break;
-    case INA228_TIME_540_us:
+    case INA228_540_us:
       Serial.print("540");
       break;
-    case INA228_TIME_1052_us:
+    case INA228_1052_us:
       Serial.print("1052");
       break;
-    case INA228_TIME_2074_us:
+    case INA228_2074_us:
       Serial.print("2074");
       break;
-    case INA228_TIME_4120_us:
+    case INA228_4120_us:
       Serial.print("4120");
       break;
   }
   Serial.println(" us");
 
-  ina228.setMode(INA228_MODE_TRIGGERED);
+  INA.setDiagnoseAlertBit(INA228_DIAG_CONVERT_READY);
+  INA.setMode(INA228_MODE_TRIG_TEMP_BUS_SHUNT);
 }
 
 // -----------------------------------------------------------------------------
@@ -141,7 +141,7 @@ void loop() {
   float E;     // Energy [J]
   uint32_t now, DT;
 
-  while (!ina228.conversionReady()) {
+  while (!INA.getDiagnoseAlertBit(INA228_DIAG_CONVERT_READY)) {
     delayMicroseconds(10);
   }
 
@@ -151,16 +151,16 @@ void loop() {
   // background. The upcoming `read...()` statements will still reflect the last
   // above `conversionReady()` state, provided the conversion times and
   // averaging count are chosen long enough.
-  ina228.setMode(INA228_MODE_TRIGGERED);
+  INA.setMode(INA228_MODE_TRIG_TEMP_BUS_SHUNT);
 
   now = micros();
   DT = now - tick;
   tick = now;
 
-  I = ina228.readCurrent();        // [mA]
-  V_bus = ina228.readBusVoltage(); // [mV]
-  P = ina228.readPower();          // [mW]
-  E = ina228.readEnergy();         // [J]
+  I = INA.getCurrent_mA();     // [mA]
+  V_bus = INA.getBusVoltage(); // [mV]
+  P = INA.getPower_mW();       // [mW]
+  E = INA.getEnergy();         // [J]
 
   if (now - tick_print >= PERIOD * 1000) {
     tick_print = now;
