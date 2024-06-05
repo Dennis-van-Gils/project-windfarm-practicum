@@ -63,67 +63,7 @@ void setup() {
 
   // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
   ina228.setVoltageConversionTime(INA228_TIME_150_us);
-
-  // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
   ina228.setCurrentConversionTime(INA228_TIME_150_us);
-
-  Serial.print("Voltage conversion time: ");
-  switch (ina228.getVoltageConversionTime()) {
-    case INA228_TIME_50_us:
-      Serial.print("50");
-      break;
-    case INA228_TIME_84_us:
-      Serial.print("84");
-      break;
-    case INA228_TIME_150_us:
-      Serial.print("150");
-      break;
-    case INA228_TIME_280_us:
-      Serial.print("280");
-      break;
-    case INA228_TIME_540_us:
-      Serial.print("540");
-      break;
-    case INA228_TIME_1052_us:
-      Serial.print("1052");
-      break;
-    case INA228_TIME_2074_us:
-      Serial.print("2074");
-      break;
-    case INA228_TIME_4120_us:
-      Serial.print("4120");
-      break;
-  }
-  Serial.println(" us");
-
-  Serial.print("Current conversion time: ");
-  switch (ina228.getCurrentConversionTime()) {
-    case INA228_TIME_50_us:
-      Serial.print("50");
-      break;
-    case INA228_TIME_84_us:
-      Serial.print("84");
-      break;
-    case INA228_TIME_150_us:
-      Serial.print("150");
-      break;
-    case INA228_TIME_280_us:
-      Serial.print("280");
-      break;
-    case INA228_TIME_540_us:
-      Serial.print("540");
-      break;
-    case INA228_TIME_1052_us:
-      Serial.print("1052");
-      break;
-    case INA228_TIME_2074_us:
-      Serial.print("2074");
-      break;
-    case INA228_TIME_4120_us:
-      Serial.print("4120");
-      break;
-  }
-  Serial.println(" us");
 
   ina228.setMode(INA228_MODE_TRIGGERED);
 }
