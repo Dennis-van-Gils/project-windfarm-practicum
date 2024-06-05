@@ -126,6 +126,9 @@ void setup() {
 
   INA.setDiagnoseAlertBit(INA228_DIAG_CONVERT_READY);
   INA.setMode(INA228_MODE_TRIG_TEMP_BUS_SHUNT);
+
+  Serial.print("ADC range: ");
+  Serial.println(INA.getADCRange());
 }
 
 // -----------------------------------------------------------------------------
@@ -158,7 +161,7 @@ void loop() {
   tick = now;
 
   I = INA.getCurrent_mA();     // [mA]
-  V_bus = INA.getBusVoltage(); // [mV]
+  V_bus = INA.getBusVoltage_mV(); // [mV]
   P = INA.getPower_mW();       // [mW]
   E = INA.getEnergy();         // [J]
 
