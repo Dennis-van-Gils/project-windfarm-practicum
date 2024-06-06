@@ -62,7 +62,7 @@ void setup() {
   // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
   ina228.setCurrentConversionTime(INA228_TIME_150_us);
   ina228.setVoltageConversionTime(INA228_TIME_150_us);
-  ina228.setTemperatureConversionTime(INA228_TIME_150_us);
+  ina228.setTemperatureConversionTime(INA228_TIME_50_us);
 
   // Report settings to terminal
   Serial.print("ADC range      : ");
@@ -88,33 +88,23 @@ void loop() {
   static uint32_t tick_print = micros();
   float I;       // Current [mA]
   float V_shunt; // Shunt voltage [mV]
-  float V_bus;   // Bus voltage [mV]
+  float V;       // Bus voltage [mV]
   float P;       // Power [mW]
   float E;       // Energy [J]
   float T_die;   // Die temperature ['C]
   uint32_t now, DT;
 
-  while (!ina228.conversionReady()) {
-    delayMicroseconds(10);
-  }
-
-  // Immediately start acquiring new measurement values for the next
-  // `conversionReady()` to speed up the effective data rate. This is possible
-  // because the INA228 chip has a dedicated digital engine running in the
-  // background. The upcoming `read...()` statements will still reflect the last
-  // above `conversionReady()` state, provided the conversion times and
-  // averaging count are chosen long enough.
-  ina228.setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
-
   now = micros();
   DT = now - tick;
   tick = now;
 
-  I = ina228.readCurrent();            // [mA]
+  I = ina228.readCurrent();    // [mA]
+  V = ina228.readBusVoltage(); // [mV]
+  P = I * V / 1e3;             // [mW]
+  E = ina228.readEnergy();     // [J]
+
+  // P = ina228.readPower();          // [mW]
   V_shunt = ina228.readShuntVoltage(); // [mV]
-  V_bus = ina228.readBusVoltage();     // [mV]
-  P = ina228.readPower();              // [mW]
-  E = ina228.readEnergy();             // [J]
   T_die = ina228.readDieTemp();        // ['C]
 
   if (now - tick_print >= PERIOD * 1000) {
@@ -127,7 +117,7 @@ void loop() {
              "P = %6.1f mW | "
              "E = %6.2f J | "
              "T = %.1f 'C",
-             DT / 1000., I, V_shunt, V_bus, P, E, T_die);
+             DT / 1000., I, V_shunt, V, P, E, T_die);
     Serial.println(buf);
   }
 }
