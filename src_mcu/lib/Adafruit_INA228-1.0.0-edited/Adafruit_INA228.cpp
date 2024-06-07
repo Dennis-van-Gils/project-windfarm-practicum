@@ -47,6 +47,9 @@ Adafruit_INA228::Adafruit_INA228(void) {}
  *            The I2C address to be used.
  *    @param  theWire
  *            The Wire object to be used for I2C connections.
+ *    @param  skipReset
+ *            When set to true, will omit resetting all INA228 registers to
+ *            their default values. Default: false.
  *    @return True if initialization was successful, otherwise false.
  */
 bool Adafruit_INA228::begin(uint8_t i2c_address, TwoWire *theWire,
@@ -95,6 +98,17 @@ void Adafruit_INA228::reset(void) {
   alert_conv.write(1);
   setMode(INA228_MODE_CONTINUOUS);
   getADCRange();
+}
+/**************************************************************************/
+/*!
+    @brief Resets the energy and charge accumulators of the INA228 chip
+    to 0.
+*/
+/**************************************************************************/
+void Adafruit_INA228::reset_accumulators(void) {
+  Adafruit_I2CRegisterBits reset_accumulators =
+      Adafruit_I2CRegisterBits(Config, 1, 14);
+  reset_accumulators.write(1);
 }
 
 /**************************************************************************/
