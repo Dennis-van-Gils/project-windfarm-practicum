@@ -115,3 +115,4 @@ venv.bak/
 */.vscode/launch.json
 */.vscode/ipch
 src_mcu/.vscode/extensions.json
+/src_python/.vscode
