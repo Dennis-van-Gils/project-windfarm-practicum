@@ -111,6 +111,31 @@ void loop() {
 
   uint32_t now = micros(); // [us] Timestamp
 
+  // Process incoming serial commands every PERIOD_SC microseconds
+  if ((now - tick_sc) > PERIOD_SC) {
+    tick_sc = now;
+    if (sc.available()) {
+      strCmd = sc.getCmd();
+
+      if (strcmp(strCmd, "id?") == 0) {
+        Ser.println("Arduino, Wind Turbine");
+        DAQ_running = false;
+
+      } else if (strcmp(strCmd, "r") == 0) {
+        ina228.reset_accumulators();
+
+      } else if (strcmp(strCmd, "on") == 0) {
+        DAQ_running = true;
+
+      } else if (strcmp(strCmd, "off") == 0) {
+        DAQ_running = false;
+
+      } else {
+        DAQ_running = !DAQ_running;
+      }
+    }
+  }
+
   // DAQ
   if (DAQ_running) {
     DT = now - tick_DAQ;
@@ -132,29 +157,5 @@ void loop() {
              "%.5f\n", // E  [J]
              DT, I, V, V_shunt, E);
     Ser.print(buf);
-  }
-
-  // Process incoming serial commands every PERIOD_SC microseconds
-  if ((now - tick_sc) > PERIOD_SC) {
-    tick_sc = now;
-    if (sc.available()) {
-      strCmd = sc.getCmd();
-
-      if (strcmp(strCmd, "id?") == 0) {
-        Ser.println("Arduino, Wind Turbine");
-
-      } else if (strcmp(strCmd, "r") == 0) {
-        ina228.reset_accumulators();
-
-      } else if (strcmp(strCmd, "on") == 0) {
-        DAQ_running = true;
-
-      } else if (strcmp(strCmd, "off") == 0) {
-        DAQ_running = false;
-
-      } else {
-        DAQ_running = !DAQ_running;
-      }
-    }
   }
 }
