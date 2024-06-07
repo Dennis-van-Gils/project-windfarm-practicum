@@ -46,16 +46,6 @@ const int BUFLEN = 255;
 char buf[BUFLEN];
 
 /*------------------------------------------------------------------------------
-    reset_ina228_energy_accumulator
-------------------------------------------------------------------------------*/
-
-void reset_ina228_energy_accumulator() {
-  Adafruit_I2CRegisterBits reset_accumulator =
-      Adafruit_I2CRegisterBits(ina228.Config, 1, 14);
-  reset_accumulator.write(1);
-}
-
-/*------------------------------------------------------------------------------
     setup
 ------------------------------------------------------------------------------*/
 
@@ -137,9 +127,9 @@ void loop() {
     snprintf(buf, BUFLEN,
              "%lu\t"   // DT [us]
              "%.2f\t"  // I  [mA]
-             "%.1f\t"  // V  [mV]
-             "%.3f\t"  // V_shunt [mV]
-             "%.3f\n", // E  [J]
+             "%.2f\t"  // V  [mV]
+             "%.4f\t"  // V_shunt [mV]
+             "%.5f\n", // E  [J]
              DT, I, V, V_shunt, E);
     Ser.print(buf);
   }
@@ -154,7 +144,7 @@ void loop() {
         Ser.println("Arduino, Wind Turbine");
 
       } else if (strcmp(strCmd, "r") == 0) {
-        reset_ina228_energy_accumulator();
+        ina228.reset_accumulators();
 
       } else if (strcmp(strCmd, "on") == 0) {
         DAQ_running = true;
