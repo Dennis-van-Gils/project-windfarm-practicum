@@ -18,7 +18,7 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 06-06-2024
+Dennis van Gils, 10-06-2024
 */
 
 #include <Arduino.h>
@@ -38,12 +38,50 @@ const uint8_t ADC_RANGE = 1;
 
 // Instantiate serial command listener
 #define Ser Serial
-const uint32_t PERIOD_SC = 20e3; // [us] Period to listen for serial commands
+const uint32_t PERIOD_SC = 20; // [ms] Period to listen for serial commands
 DvG_SerialCommand sc(Ser);
 
 // General string buffer
 const int BUFLEN = 255;
 char buf[BUFLEN];
+
+/*------------------------------------------------------------------------------
+  Time keeping
+------------------------------------------------------------------------------*/
+
+void get_systick_timestamp(uint32_t *stamp_millis,
+                           uint16_t *stamp_micros_part) {
+  /* Adapted from:
+  https://github.com/arduino/ArduinoCore-samd/blob/master/cores/arduino/delay.c
+
+  Note:
+    The millis counter will roll over after 49.7 days.
+  */
+  // clang-format off
+  uint32_t ticks, ticks2;
+  uint32_t pend, pend2;
+  uint32_t count, count2;
+  uint32_t _ulTickCount = millis();
+
+  ticks2 = SysTick->VAL;
+  pend2  = !!(SCB->ICSR & SCB_ICSR_PENDSTSET_Msk);
+  count2 = _ulTickCount;
+
+  do {
+    ticks  = ticks2;
+    pend   = pend2;
+    count  = count2;
+    ticks2 = SysTick->VAL;
+    pend2  = !!(SCB->ICSR & SCB_ICSR_PENDSTSET_Msk);
+    count2 = _ulTickCount;
+  } while ((pend != pend2) || (count != count2) || (ticks < ticks2));
+
+  (*stamp_millis) = count2;
+  if (pend) {(*stamp_millis)++;}
+  (*stamp_micros_part) =
+    (((SysTick->LOAD - ticks) * (1048576 / (VARIANT_MCK / 1000000))) >> 20);
+  // clang-format on
+}
 
 /*------------------------------------------------------------------------------
     setup
@@ -98,8 +136,6 @@ void setup() {
 
 void loop() {
   char *strCmd; // Incoming serial command string
-  static uint32_t tick_DAQ = micros();
-  static uint32_t tick_sc = tick_DAQ;
   static bool DAQ_running = false;
   uint32_t DT;   // [us] Obtained DAQ interval
   float I;       // [mA] Current
@@ -109,11 +145,22 @@ void loop() {
   // float P;       // [mW] Power
   // float T_die;   // ['C] Die temperature
 
-  uint32_t now = micros(); // [us] Timestamp
+  // Time keeping
+  static bool trigger_reset_time = false;
+  static uint32_t startup_millis = 0; // Time when DAQ turned on
+  static uint16_t startup_micros = 0; // Time when DAQ turned on
+  uint32_t millis_copy;
+  uint16_t micros_part;
 
-  // Process incoming serial commands every PERIOD_SC microseconds
-  if ((now - tick_sc) > PERIOD_SC) {
-    tick_sc = now;
+  get_systick_timestamp(&millis_copy, &micros_part);
+
+  /*----------------------------------------------------------------------------
+    Process incoming serial commands every PERIOD_SC milliseconds
+  ----------------------------------------------------------------------------*/
+  static uint32_t tick_sc = millis_copy;
+
+  if ((millis_copy - tick_sc) > PERIOD_SC) {
+    tick_sc = millis_copy;
     if (sc.available()) {
       strCmd = sc.getCmd();
 
@@ -126,21 +173,39 @@ void loop() {
 
       } else if (strcmp(strCmd, "on") == 0) {
         DAQ_running = true;
+        trigger_reset_time = true;
 
       } else if (strcmp(strCmd, "off") == 0) {
         DAQ_running = false;
 
       } else {
         DAQ_running = !DAQ_running;
+        trigger_reset_time = true;
       }
     }
   }
 
-  // DAQ
-  if (DAQ_running) {
-    DT = now - tick_DAQ;
-    tick_DAQ = now;
+  /*----------------------------------------------------------------------------
+    Acquire data
+  ----------------------------------------------------------------------------*/
 
+  if (trigger_reset_time) {
+    trigger_reset_time = false;
+    startup_millis = millis_copy;
+    startup_micros = micros_part;
+  }
+
+  if (DAQ_running) {
+    // Set start DAQ to time = 0.000
+    millis_copy -= startup_millis;
+    if (micros_part >= startup_micros) {
+      micros_part -= startup_micros;
+    } else {
+      micros_part = micros_part + 1000 - startup_micros;
+      millis_copy -= 1;
+    }
+
+    // Acquire
     I = ina228.readCurrent();
     V = ina228.readBusVoltage();
     V_shunt = ina228.readShuntVoltage();
@@ -150,12 +215,13 @@ void loop() {
     // T_die = ina228.readDieTemp();
 
     snprintf(buf, BUFLEN,
-             "%lu\t"   // DT [us]
+             "%lu\t"   // Timestamp millis [ms]
+             "%u\t"    // Timestamp micros part [us]
              "%.2f\t"  // I  [mA]
              "%.2f\t"  // V  [mV]
              "%.4f\t"  // V_shunt [mV]
              "%.5f\n", // E  [J]
-             DT, I, V, V_shunt, E);
+             millis_copy, micros_part, I, V, V_shunt, E);
     Ser.print(buf);
   }
 }
