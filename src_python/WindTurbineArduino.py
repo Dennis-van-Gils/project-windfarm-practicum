@@ -6,7 +6,7 @@ Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "07-06-2024"
+__date__ = "10-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 
@@ -30,8 +30,6 @@ class WindTurbineArduino(Arduino):
 
             self.time = RingBuffer(capacity)
             """Time stamp [s]"""
-            self.DT = RingBuffer(capacity)
-            """DAQ interval between subsequent readings [us]"""
             self.I_mA = RingBuffer(capacity)
             """Current [mA]"""
             self.V_mV = RingBuffer(capacity)
@@ -45,7 +43,6 @@ class WindTurbineArduino(Arduino):
 
             self._ringbuffers = [
                 self.time,
-                self.DT,
                 self.I_mA,
                 self.V_mV,
                 self.V_shunt_mV,
@@ -92,13 +89,13 @@ class WindTurbineArduino(Arduino):
     # --------------------------------------------------------------------------
 
     def parse_readings(self, line: str) -> bool:
-        """Parse the `line` string as received from the Arduino into separate
-        variables and store these into the `state` ring buffers.
+        """Parse the ASCII string `line` as received from the Arduino into
+        separate variables and store these into the `state` ring buffers.
 
         Returns True when successful, False otherwise.
         """
         parts = line.strip("\n").split("\t")
-        if not len(parts) == 5:
+        if not len(parts) == 6:
             pft(
                 "ERROR: Received an incorrect number of values from the "
                 "Arduino."
@@ -107,17 +104,18 @@ class WindTurbineArduino(Arduino):
 
         try:
             # fmt: off
-            DT         = int(parts[0])
-            I_mA       = float(parts[1])
-            V_mV       = float(parts[2])
-            V_shunt_mV = float(parts[3])
-            E_J        = float(parts[4])
+            time_millis = int(parts[0])
+            time_micros = int(parts[1])
+            I_mA        = float(parts[2])
+            V_mV        = float(parts[3])
+            V_shunt_mV  = float(parts[4])
+            E_J         = float(parts[5])
             # fmt: on
         except ValueError:
             pft("ERROR: Failed to convert Arduino data into numeric values.")
             return False
 
-        self.state.DT.append(DT)
+        self.state.time.append(time_millis / 1e3 + time_micros / 1e6)
         self.state.I_mA.append(I_mA)
         self.state.V_mV.append(V_mV)
         self.state.V_shunt_mV.append(V_shunt_mV)
@@ -140,13 +138,13 @@ class WindTurbineArduino(Arduino):
         Returns the number of newly appended data rows.
         """
 
-        counter = 0
+        new_rows_count = 0
         while True:
             try:
                 _success, line = self.readline(raises_on_timeout=True)
             except serial.SerialException:
                 print("Communication timed out. ", end="")
-                if counter == 0:
+                if new_rows_count == 0:
                     print("No new data was appended to the ring buffers.")
                 else:
                     print("New data was appended to the ring buffers.")
@@ -154,7 +152,7 @@ class WindTurbineArduino(Arduino):
 
             if not isinstance(line, str):
                 pft(
-                    "ERROR: Data received from the Arduino was not an ASCII"
+                    "ERROR: Data received from the Arduino was not an ASCII "
                     "string."
                 )
                 break
@@ -162,8 +160,8 @@ class WindTurbineArduino(Arduino):
             if not self.parse_readings(line):
                 break
 
-            counter += 1
-            if counter == self.state.capacity:
+            new_rows_count += 1
+            if new_rows_count == self.state.capacity:
                 break
 
-        return counter
+        return new_rows_count
