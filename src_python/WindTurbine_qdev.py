@@ -6,7 +6,7 @@ acquisition for an Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "07-06-2024"
+__date__ = "10-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 
@@ -28,6 +28,9 @@ class WindTurbine_qdev(QDeviceIO):
     ):
         super().__init__(dev, **kwargs)  # Pass kwargs onto QtCore.QObject()
         self.dev: WindTurbineArduino  # Enforce type: removes `_NoDevice()`
+
+        # Pause/resume mechanism
+        self.DAQ_is_enabled = True
 
         self.create_worker_DAQ(
             DAQ_trigger=DAQ_TRIGGER.CONTINUOUS,
@@ -54,7 +57,22 @@ class WindTurbine_qdev(QDeviceIO):
     #   _DAQ_function
     # --------------------------------------------------------------------------
 
-    def _DAQ_function(self) -> bool:
-        number_of_new_rows = self.dev.listen_to_Arduino()
+    def set_DAQ_enabled(self, state: bool):
+        self.DAQ_is_enabled = state
+        if self.DAQ_is_enabled:
+            self.turn_on()
+            self.worker_DAQ.DAQ_function = self._DAQ_function
+            self.worker_DAQ.unpause()
+        else:
+            self.turn_off()
+            self.worker_DAQ.DAQ_function = None
+            self.worker_DAQ.pause()
 
-        return number_of_new_rows > 0
+    # --------------------------------------------------------------------------
+    #   _DAQ_function
+    # --------------------------------------------------------------------------
+
+    def _DAQ_function(self) -> bool:
+        new_rows_count = self.dev.listen_to_Arduino()
+
+        return new_rows_count > 0
