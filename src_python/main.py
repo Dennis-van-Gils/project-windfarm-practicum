@@ -38,7 +38,7 @@ USE_LARGER_TEXT = False
 # Show debug info in terminal? Warning: Slow! Do not leave on unintentionally.
 DEBUG = False
 
-print(f"{qtpy.API_NAME:9s} {qtpy.QT_VERSION}")
+print(f"{qtpy.API_NAME:9s} {qtpy.QT_VERSION}")  # type: ignore
 print(f"PyQtGraph {pg.__version__}")
 
 if TRY_USING_OPENGL:
@@ -150,7 +150,8 @@ class MainWindow(QtWid.QWidget):
         # Right box
         p = {
             "alignment": QtCore.Qt.AlignmentFlag.AlignRight
-            | QtCore.Qt.AlignmentFlag.AlignVCenter
+            | QtCore.Qt.AlignmentFlag.AlignVCenter,
+            "parent": self,
         }
         self.qpbt_exit = QtWid.QPushButton("Exit")
         self.qpbt_exit.clicked.connect(self.close)
@@ -164,7 +165,8 @@ class MainWindow(QtWid.QWidget):
         )
         self.qlbl_GitHub.setOpenExternalLinks(True)
 
-        vbox_right = QtWid.QVBoxLayout(spacing=4)
+        vbox_right = QtWid.QVBoxLayout()
+        vbox_right.setSpacing(4)
         vbox_right.addWidget(self.qpbt_exit, stretch=0)
         vbox_right.addStretch(1)
         vbox_right.addWidget(QtWid.QLabel(__author__, **p))
@@ -245,7 +247,7 @@ class MainWindow(QtWid.QWidget):
         self.plot_manager.add_autorange_buttons(linked_plots=self.plot)
         self.plot_manager.add_preset_buttons(
             linked_plots=self.plot,
-            linked_curves=self.history_chart_curve,
+            linked_curves=[self.history_chart_curve],
             presets=[
                 {
                     "button_label": "0.100",
@@ -268,7 +270,7 @@ class MainWindow(QtWid.QWidget):
             ],
         )
         self.plot_manager.add_clear_button(
-            linked_curves=self.history_chart_curve
+            linked_curves=[self.history_chart_curve]
         )
         self.plot_manager.perform_preset(1)
 
@@ -378,7 +380,25 @@ if __name__ == "__main__":
     #   Set up multithreaded communication with the Arduino
     # --------------------------------------------------------------------------
 
-    ard_qdev = WindTurbine_qdev(dev=ard, debug=DEBUG)
+    def DAQ_function() -> bool:
+        new_rows_count = ard.listen_to_Arduino()
+
+        if new_rows_count != ard.state.capacity:
+            return False
+
+        # Add readings to chart history
+        window.history_chart_curve.extendData(ard.state.time, ard.state.V_mV)
+
+        # Add readings to the log
+        log.update()
+
+        return True
+
+    ard_qdev = WindTurbine_qdev(
+        dev=ard,
+        DAQ_function=DAQ_function,
+        debug=DEBUG,
+    )
 
     # --------------------------------------------------------------------------
     #   File logger
@@ -388,8 +408,8 @@ if __name__ == "__main__":
         log.write("elapsed [s]\treading_1\n")
 
     def write_data_to_log():
-        timestamp = ard.state.time
-        # log.write(f"{timestamp:.3f}\t{ard.state.V_mV:.4f}\n")
+        np_data = np.column_stack((ard.state.time, ard.state.V_mV))
+        log.np_savetxt(np_data, "%.4f\t%.4f")
 
     log = FileLogger(
         write_header_function=write_header_to_log,
@@ -403,20 +423,6 @@ if __name__ == "__main__":
     log.signal_recording_stopped.connect(
         lambda: window.qpbt_record.setText("Click to start recording to file")
     )
-
-    # --------------------------------------------------------------------------
-    #   postprocess_DAQ_updated
-    # --------------------------------------------------------------------------
-
-    @Slot()
-    def postprocess_DAQ_updated():
-        if ard_qdev.DAQ_is_enabled:
-            # Add readings to chart history
-            window.history_chart_curve.extendData(
-                ard.state.time, ard.state.V_mV
-            )
-            # Add readings to the log
-            log.update()
 
     # --------------------------------------------------------------------------
     #   Program termination routines
@@ -440,13 +446,11 @@ if __name__ == "__main__":
     #   Start the main GUI event loop
     # --------------------------------------------------------------------------
 
-    ard_qdev.signal_DAQ_updated.connect(postprocess_DAQ_updated)
-    ard_qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
-
-    app.aboutToQuit.connect(about_to_quit)
-
     window = MainWindow(qdev=ard_qdev, qlog=log)
     window.timer_chart.start(CHART_INTERVAL_MS)
     window.show()
 
+    ard_qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+
+    app.aboutToQuit.connect(about_to_quit)
     sys.exit(app.exec())
