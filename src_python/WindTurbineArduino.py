@@ -121,6 +121,9 @@ class WindTurbineArduino(Arduino):
         self.state.V_shunt_mV.append(V_shunt_mV)
         self.state.E_J.append(E_J)
 
+        # Derived
+        self.state.P_mW.append(I_mA * V_mV / 1e3)
+
         return True
 
     # --------------------------------------------------------------------------

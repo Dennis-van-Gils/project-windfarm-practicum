@@ -187,16 +187,17 @@ class MainWindow(QtWid.QWidget):
 
         # GraphicsLayoutWidget
         self.gw = pg.GraphicsLayoutWidget()
-        self.plot = self.gw.addPlot()
+        self.plot: pg.PlotItem = self.gw.addPlot()
 
         p = {
             "color": "#EEE",
             "font-size": "20pt" if USE_LARGER_TEXT else "10pt",
         }
         self.plot.setClipToView(True)
+        self.plot.setYRange(0, 6)
         self.plot.showGrid(x=1, y=1)
         self.plot.setLabel("bottom", text="history (sec)", **p)
-        self.plot.setLabel("left", text="amplitude", **p)
+        self.plot.setLabel("left", text="P [mW]", **p)
 
         if USE_LARGER_TEXT:
             font = QtGui.QFont()
@@ -220,7 +221,7 @@ class MainWindow(QtWid.QWidget):
         self.qlin_reading_t = QtWid.QLineEdit(**p)
         self.qlin_reading_1 = QtWid.QLineEdit(**p)
         self.qpbt_running = controls.create_Toggle_button(
-            "Running", checked=False
+            "Running", checked=True
         )
         self.qpbt_running.clicked.connect(
             lambda state: self.process_qpbt_running(state)
@@ -231,7 +232,7 @@ class MainWindow(QtWid.QWidget):
         grid.addWidget(self.qpbt_running   , 0, 0, 1, 2)
         grid.addWidget(QtWid.QLabel("time"), 1, 0)
         grid.addWidget(self.qlin_reading_t , 1, 1)
-        grid.addWidget(QtWid.QLabel("#01") , 2, 0)
+        grid.addWidget(QtWid.QLabel("P [mW]") , 2, 0)
         grid.addWidget(self.qlin_reading_1 , 2, 1)
         grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         # fmt: on
@@ -250,22 +251,16 @@ class MainWindow(QtWid.QWidget):
             linked_curves=[self.history_chart_curve],
             presets=[
                 {
-                    "button_label": "0.100",
-                    "x_axis_label": "history (msec)",
-                    "x_axis_divisor": 1e-3,
-                    "x_axis_range": (-101, 0),
-                },
-                {
-                    "button_label": "0:05",
-                    "x_axis_label": "history (sec)",
-                    "x_axis_divisor": 1,
-                    "x_axis_range": (-5.05, 0),
-                },
-                {
                     "button_label": "0:10",
                     "x_axis_label": "history (sec)",
                     "x_axis_divisor": 1,
                     "x_axis_range": (-10.1, 0),
+                },
+                {
+                    "button_label": "0:30",
+                    "x_axis_label": "history (sec)",
+                    "x_axis_divisor": 1,
+                    "x_axis_range": (-30.1, 0),
                 },
             ],
         )
@@ -321,7 +316,7 @@ class MainWindow(QtWid.QWidget):
             else ""
         )
         self.qlin_reading_t.setText(f"{state.time[0]:.3f}")
-        self.qlin_reading_1.setText(f"{state.V_mV[0]:.4f}")
+        self.qlin_reading_1.setText(f"{state.P_mW[0]:.4f}")
 
     @Slot()
     def update_chart(self):
@@ -387,7 +382,7 @@ if __name__ == "__main__":
             return False
 
         # Add readings to chart history
-        window.history_chart_curve.extendData(ard.state.time, ard.state.V_mV)
+        window.history_chart_curve.extendData(ard.state.time, ard.state.P_mW)
 
         # Add readings to the log
         log.update()
@@ -405,10 +400,10 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     def write_header_to_log():
-        log.write("elapsed [s]\treading_1\n")
+        log.write("time [s]\tP [mW]\n")
 
     def write_data_to_log():
-        np_data = np.column_stack((ard.state.time, ard.state.V_mV))
+        np_data = np.column_stack((ard.state.time, ard.state.P_mW))
         log.np_savetxt(np_data, "%.4f\t%.4f")
 
     log = FileLogger(
@@ -451,6 +446,7 @@ if __name__ == "__main__":
     window.show()
 
     ard_qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+    ard_qdev.set_DAQ_enabled(True)
 
     app.aboutToQuit.connect(about_to_quit)
     sys.exit(app.exec())
