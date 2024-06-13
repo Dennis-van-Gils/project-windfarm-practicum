@@ -18,7 +18,7 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 10-06-2024
+Dennis van Gils, 13-06-2024
 */
 
 #include <Arduino.h>
@@ -146,9 +146,6 @@ void loop() {
   // float T_die;   // ['C] Die temperature
 
   // Time keeping
-  static bool trigger_reset_time = false;
-  static uint32_t startup_millis = 0; // Time when DAQ turned on
-  static uint16_t startup_micros = 0; // Time when DAQ turned on
   uint32_t millis_copy;
   uint16_t micros_part;
 
@@ -173,14 +170,12 @@ void loop() {
 
       } else if (strcmp(strCmd, "on") == 0) {
         DAQ_running = true;
-        trigger_reset_time = true;
 
       } else if (strcmp(strCmd, "off") == 0) {
         DAQ_running = false;
 
       } else {
         DAQ_running = !DAQ_running;
-        trigger_reset_time = true;
       }
     }
   }
@@ -189,23 +184,7 @@ void loop() {
     Acquire data
   ----------------------------------------------------------------------------*/
 
-  if (trigger_reset_time) {
-    trigger_reset_time = false;
-    startup_millis = millis_copy;
-    startup_micros = micros_part;
-  }
-
   if (DAQ_running) {
-    // Set start DAQ to time = 0.000
-    millis_copy -= startup_millis;
-    if (micros_part >= startup_micros) {
-      micros_part -= startup_micros;
-    } else {
-      micros_part = micros_part + 1000 - startup_micros;
-      millis_copy -= 1;
-    }
-
-    // Acquire
     I = ina228.readCurrent();
     V = ina228.readBusVoltage();
     V_shunt = ina228.readShuntVoltage();
