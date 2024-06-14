@@ -30,9 +30,6 @@ class WindTurbine_qdev(QDeviceIO):
         super().__init__(dev, **kwargs)  # Pass kwargs onto QtCore.QObject()
         self.dev: WindTurbineArduino  # Enforce type: removes `_NoDevice()`
 
-        # Pause/resume mechanism
-        self.DAQ_is_enabled = True
-
         self.create_worker_DAQ(
             DAQ_trigger=DAQ_TRIGGER.CONTINUOUS,
             DAQ_function=DAQ_function,
@@ -53,16 +50,3 @@ class WindTurbine_qdev(QDeviceIO):
 
     def reset_accumulators(self):
         self.send(self.dev.reset_accumulators)
-
-    # --------------------------------------------------------------------------
-    #   _DAQ_function
-    # --------------------------------------------------------------------------
-
-    def set_DAQ_enabled(self, state: bool):
-        self.DAQ_is_enabled = state
-        if self.DAQ_is_enabled:
-            self.turn_on()
-            self.unpause_DAQ()
-        else:
-            self.turn_off()
-            self.pause_DAQ()

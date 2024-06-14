@@ -20,6 +20,7 @@ import psutil
 import numpy as np
 import pyqtgraph as pg
 
+from dvg_debug_functions import tprint
 from dvg_pyqtgraph_threadsafe import HistoryChartCurve, PlotManager
 from dvg_pyqt_filelogger import FileLogger
 import dvg_pyqt_controls as controls
@@ -91,6 +92,10 @@ class MainWindow(QtWid.QWidget):
         self.qdev = qdev
         self.qdev.signal_DAQ_updated.connect(self.update_GUI)
         self.qlog = qlog
+
+        self.do_update_readings_GUI = True
+        """Update the GUI elements corresponding to the Arduino readings, like
+        textboxes and charts?"""
 
         self.setWindowTitle("Arduino wind turbine")
         self.setGeometry(40, 60, 960, 660)
@@ -298,7 +303,7 @@ class MainWindow(QtWid.QWidget):
     @Slot(bool)
     def process_qpbt_running(self, state: bool):
         self.qpbt_running.setText("Running" if state else "Paused")
-        self.qdev.set_DAQ_enabled(state)
+        self.do_update_readings_GUI = state
 
     @Slot()
     def update_GUI(self):
@@ -308,22 +313,26 @@ class MainWindow(QtWid.QWidget):
         self.qlbl_cur_date_time.setText(f"{str_cur_date}    {str_cur_time}")
         self.qlbl_update_counter.setText(f"{self.qdev.update_counter_DAQ}")
         self.qlbl_DAQ_rate.setText(
-            f"DAQ: {self.qdev.obtained_DAQ_rate_Hz:.1f} Hz"
+            f"DAQ: {self.qdev.obtained_DAQ_rate_Hz:.2f} blocks/s | "
+            f"{self.qdev.obtained_DAQ_rate_Hz * state.capacity:.1f} Hz"
         )
         self.qlbl_recording_time.setText(
             f"REC: {self.qlog.pretty_elapsed()}"
             if self.qlog.is_recording()
             else ""
         )
-        self.qlin_reading_t.setText(f"{state.time[0]:.3f}")
-        self.qlin_reading_1.setText(f"{state.P_mW[0]:.4f}")
+
+        if self.do_update_readings_GUI:
+            self.qlin_reading_t.setText(f"{state.time[0]:.3f}")
+            self.qlin_reading_1.setText(f"{state.P_mW[0]:.4f}")
 
     @Slot()
     def update_chart(self):
-        # if DEBUG:
-        #     tprint("update_curve")
+        if self.do_update_readings_GUI:
+            if DEBUG:
+                tprint("update_curve")
 
-        self.history_chart_curve.update()
+            self.history_chart_curve.update()
 
 
 # ------------------------------------------------------------------------------
@@ -350,6 +359,7 @@ if __name__ == "__main__":
 
     ard.serial_settings["baudrate"] = 115200
     ard.auto_connect()
+    ard.turn_on()
 
     if not ard.is_alive:
         print("\nCheck connection and try resetting the Arduino.")
@@ -446,7 +456,7 @@ if __name__ == "__main__":
     window.show()
 
     ard_qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
-    ard_qdev.set_DAQ_enabled(True)
+    ard_qdev.unpause_DAQ()
 
     app.aboutToQuit.connect(about_to_quit)
     sys.exit(app.exec())
