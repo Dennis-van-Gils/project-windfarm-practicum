@@ -116,7 +116,8 @@ void setup() {
     Ser.println(i2c_address, HEX);
     i++;
 
-    ina228.setShunt(R_SHUNT, MAX_CURRENT, ADC_RANGE);
+    ina228.setShunt(R_SHUNT, MAX_CURRENT);
+    ina228.setADCRange(ADC_RANGE);
     ina228.setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
 
     // [#] 1, 4, 16, 64, 128, 256, 512, 1024
