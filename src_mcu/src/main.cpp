@@ -166,7 +166,7 @@ void loop() {
         DAQ_running = false;
 
       } else if (strcmp(strCmd, "r") == 0) {
-        ina228.reset_accumulators();
+        ina228.resetAccumulators();
 
       } else if (strcmp(strCmd, "on") == 0) {
         DAQ_running = true;
