@@ -95,7 +95,7 @@ void setup() {
     delay(10);
   }
 
-  const uint8_t I2C_ADDRESS = 64;
+  const uint8_t I2C_ADDRESS = 0x40;
   const bool SKIP_RESET = true;
 
   if (!ina228.begin(I2C_ADDRESS, &Wire, SKIP_RESET)) {
