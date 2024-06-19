@@ -8,6 +8,7 @@ __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
 __date__ = "19-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-function-docstring, unnecessary-lambda
+# pylint: disable=multiple-statements
 
 import os
 import sys
@@ -35,11 +36,11 @@ from WindTurbine_qdev import WindTurbine_qdev
 
 # Constants
 CHART_CAPACITY = int(1e4)  # [number of points]
-CHART_INTERVAL_MS = 20  # [ms]
+CHART_INTERVAL_MS = 100  # [ms]
 
 # Global flags
 TRY_USING_OPENGL = True
-USE_LARGER_TEXT = True
+USE_LARGER_TEXT = False
 
 # Show debug info in terminal? Warning: Slow! Do not leave on unintentionally.
 DEBUG = False
@@ -197,38 +198,47 @@ class MainWindow(QtWid.QWidget):
 
         # GraphicsLayoutWidget
         self.gw = pg.GraphicsLayoutWidget()
-        self.pi_power: pg.PlotItem = self.gw.addPlot()
 
         p = {
             "color": "#EEE",
             "font-size": "20pt" if USE_LARGER_TEXT else "10pt",
         }
-        self.pi_power.setClipToView(True)
-        self.pi_power.setYRange(0, 6)
-        self.pi_power.showGrid(x=1, y=1)
-        self.pi_power.setLabel("bottom", text="history (sec)", **p)
-        self.pi_power.setLabel("left", text="power : P (mW)", **p)
 
-        if USE_LARGER_TEXT:
-            font = QtGui.QFont()
-            font.setPixelSize(26)
-            self.pi_power.getAxis("bottom").setTickFont(font)
-            self.pi_power.getAxis("bottom").setStyle(tickTextOffset=20)
-            self.pi_power.getAxis("bottom").setHeight(90)
-            self.pi_power.getAxis("left").setTickFont(font)
-            self.pi_power.getAxis("left").setStyle(tickTextOffset=20)
-            self.pi_power.getAxis("left").setWidth(120)
+        self.pi_power: pg.PlotItem = self.gw.addPlot(row=0, col=0)
+        self.pi_power.setLabel("left", text="power : P (mW)", **p)
+        self.pi_power.setYRange(0, 6)
+
+        self.pi_energy: pg.PlotItem = self.gw.addPlot(row=1, col=0)
+        self.pi_energy.setLabel("left", text="energy : E (J)", **p)
+
+        self.pi_all = [self.pi_power, self.pi_energy]
+        # List of all PlotItems
+
+        for plot_item in self.pi_all:
+            plot_item.setClipToView(True)
+            plot_item.showGrid(x=1, y=1)
+            plot_item.setLabel("bottom", text="history (sec)", **p)
+
+            if USE_LARGER_TEXT:
+                font = QtGui.QFont()
+                font.setPixelSize(26)
+                plot_item.getAxis("bottom").setTickFont(font)
+                plot_item.getAxis("bottom").setStyle(tickTextOffset=20)
+                plot_item.getAxis("bottom").setHeight(90)
+                plot_item.getAxis("left").setTickFont(font)
+                plot_item.getAxis("left").setStyle(tickTextOffset=20)
+                plot_item.getAxis("left").setWidth(120)
 
         # -------------------------
         #   Create history charts
         # -------------------------
 
-        self.tscurves_P: list[ThreadSafeCurve] = []
-        """List of all ThreadSafeCurves for plotting the power [mW]"""
-
         pen_1 = pg.mkPen(color=(255, 30, 180), width=3)
         pen_2 = pg.mkPen(color=(255, 255, 90), width=3)
         pen_3 = pg.mkPen(color=(0, 255, 255), width=3)
+
+        self.tscurves_P: list[ThreadSafeCurve] = []
+        """List of all ThreadSafeCurves for plotting the power [mW]"""
 
         self.tscurves_P.append(
             HistoryChartCurve(
@@ -249,6 +259,31 @@ class MainWindow(QtWid.QWidget):
             )
         )
 
+        self.tscurves_E: list[ThreadSafeCurve] = []
+        """List of all ThreadSafeCurves for plotting the energy [J]"""
+
+        self.tscurves_E.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_energy.plot(pen=pen_1, name="Turbine 1"),
+            )
+        )
+        self.tscurves_E.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_energy.plot(pen=pen_2, name="Turbine 2"),
+            )
+        )
+        self.tscurves_E.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_energy.plot(pen=pen_3, name="Turbine 3"),
+            )
+        )
+
+        self.tscurves_all = self.tscurves_P + self.tscurves_E
+        # List of all ThreadSafeCurves
+
         # -------------------------
         #   Legend
         # -------------------------
@@ -264,10 +299,10 @@ class MainWindow(QtWid.QWidget):
         # -------------------------
 
         self.plot_manager = PlotManager(parent=self)
-        self.plot_manager.add_autorange_buttons(linked_plots=self.pi_power)
+        self.plot_manager.add_autorange_buttons(linked_plots=self.pi_all)
         self.plot_manager.add_preset_buttons(
-            linked_plots=self.pi_power,
-            linked_curves=self.tscurves_P,
+            linked_plots=self.pi_all,
+            linked_curves=self.tscurves_all,
             presets=[
                 {
                     "button_label": "0:30",
@@ -283,7 +318,7 @@ class MainWindow(QtWid.QWidget):
                 },
             ],
         )
-        self.plot_manager.add_clear_button(linked_curves=self.tscurves_P)
+        self.plot_manager.add_clear_button(linked_curves=self.tscurves_all)
         self.plot_manager.perform_preset(1)
 
         qgrp_history = QtWid.QGroupBox("History")
@@ -304,22 +339,26 @@ class MainWindow(QtWid.QWidget):
         self.qpbt_running.clicked.connect(
             lambda state: self.process_qpbt_running(state)
         )
+        self.qpbt_reset_E = QtWid.QPushButton("Reset energy")
+        self.qpbt_reset_E.clicked.connect(qdev.reset_accumulators)
 
         # fmt: off
+        i = 0
         grid = QtWid.QGridLayout()
-        grid.addWidget(self.qpbt_running       , 0, 0, 1, 2)
-        grid.addWidget(QtWid.QLabel("time")    , 1, 0)
-        grid.addWidget(self.timestamp          , 1, 1)
-        grid.addWidget(QtWid.QLabel("sec")     , 1, 2)
-        grid.addWidget(QtWid.QLabel("avg. P_1"), 2, 0)
-        grid.addWidget(self.P_1                , 2, 1)
-        grid.addWidget(QtWid.QLabel("mW")      , 2, 2)
-        grid.addWidget(QtWid.QLabel("avg. P_2"), 3, 0)
-        grid.addWidget(self.P_2                , 3, 1)
-        grid.addWidget(QtWid.QLabel("mW")      , 3, 2)
-        grid.addWidget(QtWid.QLabel("avg. P_3"), 4, 0)
-        grid.addWidget(self.P_3                , 4, 1)
-        grid.addWidget(QtWid.QLabel("mW")      , 4, 2)
+        grid.addWidget(self.qpbt_running       , i, 0, 1, 2); i+=1
+        grid.addWidget(self.qpbt_reset_E       , i, 0, 1, 2); i+=1
+        grid.addWidget(QtWid.QLabel("time")    , i, 0)
+        grid.addWidget(self.timestamp          , i, 1)
+        grid.addWidget(QtWid.QLabel("sec")     , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("avg. P_1"), i, 0)
+        grid.addWidget(self.P_1                , i, 1)
+        grid.addWidget(QtWid.QLabel("mW")      , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("avg. P_2"), i, 0)
+        grid.addWidget(self.P_2                , i, 1)
+        grid.addWidget(QtWid.QLabel("mW")      , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("avg. P_3"), i, 0)
+        grid.addWidget(self.P_3                , i, 1)
+        grid.addWidget(QtWid.QLabel("mW")      , i, 2)
         grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         # fmt: on
 
@@ -390,9 +429,9 @@ class MainWindow(QtWid.QWidget):
     def update_chart(self):
         if self.do_update_readings_GUI:
             if DEBUG:
-                tprint("update_curve")
+                tprint("update_chart")
 
-            for tscurve in self.tscurves_P:
+            for tscurve in self.tscurves_all:
                 tscurve.update()
 
 
@@ -456,6 +495,9 @@ if __name__ == "__main__":
         window.tscurves_P[0].extendData(ard.state.time, ard.state.P_1)
         window.tscurves_P[1].extendData(ard.state.time, ard.state.P_2)
         window.tscurves_P[2].extendData(ard.state.time, ard.state.P_3)
+        window.tscurves_E[0].extendData(ard.state.time, ard.state.E_1)
+        window.tscurves_E[1].extendData(ard.state.time, ard.state.E_2)
+        window.tscurves_E[2].extendData(ard.state.time, ard.state.E_3)
 
         # Add readings to the log
         log.update()
@@ -518,7 +560,7 @@ if __name__ == "__main__":
     window.timer_chart.start(CHART_INTERVAL_MS)
     window.show()
 
-    ard_qdev.start(DAQ_priority=QtCore.QThread.Priority.TimeCriticalPriority)
+    ard_qdev.start()
     ard_qdev.unpause_DAQ()
 
     app.aboutToQuit.connect(about_to_quit)
