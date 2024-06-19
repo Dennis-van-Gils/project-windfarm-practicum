@@ -6,7 +6,7 @@ Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "10-06-2024"
+__date__ = "19-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 
@@ -30,26 +30,45 @@ class WindTurbineArduino(Arduino):
 
             self.time = RingBuffer(capacity)
             """Time stamp [s]"""
-            self.I_mA = RingBuffer(capacity)
+
+            self.I_1 = RingBuffer(capacity)
             """Current [mA]"""
-            self.V_mV = RingBuffer(capacity)
+            self.I_2 = RingBuffer(capacity)
+            """Current [mA]"""
+            self.I_3 = RingBuffer(capacity)
+            """Current [mA]"""
+
+            self.V_1 = RingBuffer(capacity)
             """Bus voltage [mV]"""
-            self.V_shunt_mV = RingBuffer(capacity)
-            """Shunt voltage [mV]"""
-            self.E_J = RingBuffer(capacity)
+            self.V_2 = RingBuffer(capacity)
+            """Bus voltage [mV]"""
+            self.V_3 = RingBuffer(capacity)
+            """Bus voltage [mV]"""
+
+            self.E_1 = RingBuffer(capacity)
             """Accumulated energy [J]"""
-            self.P_mW = RingBuffer(capacity)
+            self.E_2 = RingBuffer(capacity)
+            """Accumulated energy [J]"""
+            self.E_3 = RingBuffer(capacity)
+            """Accumulated energy [J]"""
+
+            self.P_1 = RingBuffer(capacity)
+            """Power [mW]"""
+            self.P_2 = RingBuffer(capacity)
+            """Power [mW]"""
+            self.P_3 = RingBuffer(capacity)
             """Power [mW]"""
 
+            # fmt: off
             self._ringbuffers = [
                 self.time,
-                self.I_mA,
-                self.V_mV,
-                self.V_shunt_mV,
-                self.E_J,
-                self.P_mW,
+                self.I_1, self.I_2, self.I_3,
+                self.V_1, self.V_2, self.V_3,
+                self.E_1, self.E_2, self.E_3,
+                self.P_1, self.P_2, self.P_3,
             ]
             """List of all ring buffers"""
+            # fmt: on
 
         def clear_ring_buffers(self):
             for rb in self._ringbuffers:
@@ -95,34 +114,41 @@ class WindTurbineArduino(Arduino):
         Returns True when successful, False otherwise.
         """
         parts = line.strip("\n").split("\t")
-        if not len(parts) == 6:
-            pft(
-                "ERROR: Received an incorrect number of values from the "
-                "Arduino."
-            )
-            return False
 
         try:
-            # fmt: off
             time_millis = int(parts[0])
             time_micros = int(parts[1])
-            I_mA        = float(parts[2])
-            V_mV        = float(parts[3])
-            V_shunt_mV  = float(parts[4])
-            E_J         = float(parts[5])
-            # fmt: on
+            I_1 = float(parts[2])
+            V_1 = float(parts[3])
+            E_1 = float(parts[4])
+            I_2 = float(parts[5])
+            V_2 = float(parts[6])
+            E_2 = float(parts[7])
+            I_3 = float(parts[8])
+            V_3 = float(parts[9])
+            E_3 = float(parts[10])
+        except IndexError:
+            pft("Received an incorrect number of values from the Arduino.")
+            return False
         except ValueError:
-            pft("ERROR: Failed to convert Arduino data into numeric values.")
+            pft("Failed to convert Arduino data into numeric values.")
             return False
 
         self.state.time.append(time_millis / 1e3 + time_micros / 1e6)
-        self.state.I_mA.append(I_mA)
-        self.state.V_mV.append(V_mV)
-        self.state.V_shunt_mV.append(V_shunt_mV)
-        self.state.E_J.append(E_J)
+        self.state.I_1.append(I_1)
+        self.state.I_2.append(I_2)
+        self.state.I_3.append(I_3)
+        self.state.V_1.append(V_1)
+        self.state.V_2.append(V_2)
+        self.state.V_3.append(V_3)
+        self.state.E_1.append(E_1)
+        self.state.E_2.append(E_2)
+        self.state.E_3.append(E_3)
 
         # Derived
-        self.state.P_mW.append(I_mA * V_mV / 1e3)
+        self.state.P_1.append(I_1 * V_1 / 1e3)
+        self.state.P_2.append(I_2 * V_2 / 1e3)
+        self.state.P_3.append(I_3 * V_3 / 1e3)
 
         return True
 

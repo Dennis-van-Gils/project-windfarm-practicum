@@ -18,7 +18,7 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 13-06-2024
+Dennis van Gils, 19-06-2024
 */
 
 #include <Arduino.h>
@@ -26,8 +26,15 @@ Dennis van Gils, 13-06-2024
 #include "Adafruit_INA228.h"
 #include "DvG_SerialCommand.h"
 
-// INA228 current sensor
-Adafruit_INA228 ina228 = Adafruit_INA228();
+// INA228 current sensors
+Adafruit_INA228 ina228_sensors[] = {
+    Adafruit_INA228(),
+    Adafruit_INA228(),
+    Adafruit_INA228(),
+};
+
+// INA228 I2C addresses
+uint8_t ina228_addresses[] = {0x40, 0x41, 0x44};
 
 // [Ohm] Shunt resistor internal to Adafruit INA228
 const float R_SHUNT = 0.015;
@@ -35,6 +42,8 @@ const float R_SHUNT = 0.015;
 const float MAX_CURRENT = 0.2;
 // Shunt full scale ADC range. 0: +/-163.84 mV or 1: +/-40.96 mV.
 const uint8_t ADC_RANGE = 1;
+// Prevent resetting the INA228 chip on init?
+const bool SKIP_RESET = true;
 
 // Instantiate serial command listener
 #define Ser Serial
@@ -42,7 +51,7 @@ const uint32_t PERIOD_SC = 20; // [ms] Period to listen for serial commands
 DvG_SerialCommand sc(Ser);
 
 // General string buffer
-const int BUFLEN = 255;
+const int BUFLEN = 1024;
 char buf[BUFLEN];
 
 /*------------------------------------------------------------------------------
@@ -95,39 +104,44 @@ void setup() {
     delay(10);
   }
 
-  const uint8_t I2C_ADDRESS = 0x40;
-  const bool SKIP_RESET = true;
+  uint8_t i = 0;
+  for (auto &ina228 : ina228_sensors) {
+    uint8_t i2c_address = ina228_addresses[i];
+    if (!ina228.begin(i2c_address, &Wire, SKIP_RESET)) {
+      Ser.print("Couldn't find INA228 chip at address ");
+      Ser.println(i2c_address, HEX);
+      while (1) {}
+    }
+    Ser.print("Found INA228 chip at address ");
+    Ser.println(i2c_address, HEX);
+    i++;
 
-  if (!ina228.begin(I2C_ADDRESS, &Wire, SKIP_RESET)) {
-    Ser.println("Couldn't find INA228 chip");
-    while (1) {}
+    ina228.setShunt(R_SHUNT, MAX_CURRENT, ADC_RANGE);
+    ina228.setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
+
+    // [#] 1, 4, 16, 64, 128, 256, 512, 1024
+    ina228.setAveragingCount(INA228_COUNT_4);
+
+    // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
+    ina228.setCurrentConversionTime(INA228_TIME_150_us);
+    ina228.setVoltageConversionTime(INA228_TIME_150_us);
+    ina228.setTemperatureConversionTime(INA228_TIME_50_us);
+
+    // Report settings to terminal
+    Ser.print("ADC range      : ");
+    Ser.println(ina228.getADCRange());
+    Ser.print("Mode           : ");
+    Ser.println(ina228.getMode());
+    Ser.print("Averaging count: ");
+    Ser.println(ina228.getAveragingCount());
+    Ser.print("Current     conversion time: ");
+    Ser.println(ina228.getCurrentConversionTime());
+    Ser.print("Voltage     conversion time: ");
+    Ser.println(ina228.getVoltageConversionTime());
+    Ser.print("Temperature conversion time: ");
+    Ser.println(ina228.getTemperatureConversionTime());
+    Ser.println();
   }
-  Ser.println("Found INA228 chip");
-
-  ina228.setShunt(R_SHUNT, MAX_CURRENT, ADC_RANGE);
-  ina228.setMode(INA228_MODE_CONT_TEMP_BUS_SHUNT);
-
-  // [#] 1, 4, 16, 64, 128, 256, 512, 1024
-  ina228.setAveragingCount(INA228_COUNT_4);
-
-  // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
-  ina228.setCurrentConversionTime(INA228_TIME_150_us);
-  ina228.setVoltageConversionTime(INA228_TIME_150_us);
-  ina228.setTemperatureConversionTime(INA228_TIME_50_us);
-
-  // Report settings to terminal
-  Ser.print("ADC range      : ");
-  Ser.println(ina228.getADCRange());
-  Ser.print("Mode           : ");
-  Ser.println(ina228.getMode());
-  Ser.print("Averaging count: ");
-  Ser.println(ina228.getAveragingCount());
-  Ser.print("Current     conversion time: ");
-  Ser.println(ina228.getCurrentConversionTime());
-  Ser.print("Voltage     conversion time: ");
-  Ser.println(ina228.getVoltageConversionTime());
-  Ser.print("Temperature conversion time: ");
-  Ser.println(ina228.getTemperatureConversionTime());
 }
 
 /*------------------------------------------------------------------------------
@@ -137,11 +151,10 @@ void setup() {
 void loop() {
   char *strCmd; // Incoming serial command string
   static bool DAQ_running = false;
-  uint32_t DT;   // [us] Obtained DAQ interval
-  float I;       // [mA] Current
-  float V;       // [mV] Bus voltage
-  float V_shunt; // [mV] Shunt voltage
-  float E;       // [J]  Energy
+  float I; // [mA] Current
+  float V; // [mV] Bus voltage
+  float E; // [J]  Energy
+  // float V_shunt; // [mV] Shunt voltage
   // float P;       // [mW] Power
   // float T_die;   // ['C] Die temperature
 
@@ -166,7 +179,9 @@ void loop() {
         DAQ_running = false;
 
       } else if (strcmp(strCmd, "r") == 0) {
-        ina228.resetAccumulators();
+        for (auto &ina228 : ina228_sensors) {
+          ina228.resetAccumulators();
+        }
 
       } else if (strcmp(strCmd, "on") == 0) {
         DAQ_running = true;
@@ -185,22 +200,28 @@ void loop() {
   ----------------------------------------------------------------------------*/
 
   if (DAQ_running) {
-    I = ina228.readCurrent();
-    V = ina228.readBusVoltage();
-    V_shunt = ina228.readShuntVoltage();
-    E = ina228.readEnergy();
-    // P = ina228.readPower();
-    // P = I * V / 1e3;
-    // T_die = ina228.readDieTemp();
-
     snprintf(buf, BUFLEN,
-             "%lu\t"   // Timestamp millis [ms]
-             "%u\t"    // Timestamp micros part [us]
-             "%.2f\t"  // I  [mA]
-             "%.2f\t"  // V  [mV]
-             "%.4f\t"  // V_shunt [mV]
-             "%.5f\n", // E  [J]
-             millis_copy, micros_part, I, V, V_shunt, E);
-    Ser.print(buf);
+             "%lu\t" // Timestamp millis [ms]
+             "%u",   // Timestamp micros part [us]
+             millis_copy, micros_part);
+
+    for (auto &ina228 : ina228_sensors) {
+      I = ina228.readCurrent();
+      V = ina228.readBusVoltage();
+      E = ina228.readEnergy();
+      // V_shunt = ina228.readShuntVoltage();
+      // P = ina228.readPower();
+      // P = I * V / 1e3;
+      // T_die = ina228.readDieTemp();
+
+      snprintf(buf + strlen(buf), BUFLEN - strlen(buf),
+               "\t"
+               "%.2f\t" // I
+               "%.2f\t" // V
+               "%.5f",  // E
+               I, V, E);
+    }
+
+    Ser.println(buf);
   }
 }

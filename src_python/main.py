@@ -5,7 +5,7 @@
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "07-06-2024"
+__date__ = "19-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-function-docstring, unnecessary-lambda
 
@@ -21,7 +21,12 @@ import numpy as np
 import pyqtgraph as pg
 
 from dvg_debug_functions import tprint
-from dvg_pyqtgraph_threadsafe import HistoryChartCurve, PlotManager
+from dvg_pyqtgraph_threadsafe import (
+    HistoryChartCurve,
+    ThreadSafeCurve,
+    LegendSelect,
+    PlotManager,
+)
 from dvg_pyqt_filelogger import FileLogger
 import dvg_pyqt_controls as controls
 
@@ -34,7 +39,7 @@ CHART_INTERVAL_MS = 20  # [ms]
 
 # Global flags
 TRY_USING_OPENGL = True
-USE_LARGER_TEXT = False
+USE_LARGER_TEXT = True
 
 # Show debug info in terminal? Warning: Slow! Do not leave on unintentionally.
 DEBUG = False
@@ -192,39 +197,107 @@ class MainWindow(QtWid.QWidget):
 
         # GraphicsLayoutWidget
         self.gw = pg.GraphicsLayoutWidget()
-        self.plot: pg.PlotItem = self.gw.addPlot()
+        self.pi_power: pg.PlotItem = self.gw.addPlot()
 
         p = {
             "color": "#EEE",
             "font-size": "20pt" if USE_LARGER_TEXT else "10pt",
         }
-        self.plot.setClipToView(True)
-        self.plot.setYRange(0, 6)
-        self.plot.showGrid(x=1, y=1)
-        self.plot.setLabel("bottom", text="history (sec)", **p)
-        self.plot.setLabel("left", text="P [mW]", **p)
+        self.pi_power.setClipToView(True)
+        self.pi_power.setYRange(0, 6)
+        self.pi_power.showGrid(x=1, y=1)
+        self.pi_power.setLabel("bottom", text="history (sec)", **p)
+        self.pi_power.setLabel("left", text="power : P (mW)", **p)
 
         if USE_LARGER_TEXT:
             font = QtGui.QFont()
             font.setPixelSize(26)
-            self.plot.getAxis("bottom").setTickFont(font)
-            self.plot.getAxis("bottom").setStyle(tickTextOffset=20)
-            self.plot.getAxis("bottom").setHeight(90)
-            self.plot.getAxis("left").setTickFont(font)
-            self.plot.getAxis("left").setStyle(tickTextOffset=20)
-            self.plot.getAxis("left").setWidth(120)
+            self.pi_power.getAxis("bottom").setTickFont(font)
+            self.pi_power.getAxis("bottom").setStyle(tickTextOffset=20)
+            self.pi_power.getAxis("bottom").setHeight(90)
+            self.pi_power.getAxis("left").setTickFont(font)
+            self.pi_power.getAxis("left").setStyle(tickTextOffset=20)
+            self.pi_power.getAxis("left").setWidth(120)
 
-        self.history_chart_curve = HistoryChartCurve(
-            capacity=CHART_CAPACITY,
-            linked_curve=self.plot.plot(
-                pen=pg.mkPen(color=[255, 255, 0], width=3)
-            ),
+        # -------------------------
+        #   Create history charts
+        # -------------------------
+
+        self.tscurves_P: list[ThreadSafeCurve] = []
+        """List of all ThreadSafeCurves for plotting the power [mW]"""
+
+        pen_1 = pg.mkPen(color=(255, 30, 180), width=3)
+        pen_2 = pg.mkPen(color=(255, 255, 90), width=3)
+        pen_3 = pg.mkPen(color=(0, 255, 255), width=3)
+
+        self.tscurves_P.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_power.plot(pen=pen_1, name="Turbine 1"),
+            )
         )
+        self.tscurves_P.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_power.plot(pen=pen_2, name="Turbine 2"),
+            )
+        )
+        self.tscurves_P.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_power.plot(pen=pen_3, name="Turbine 3"),
+            )
+        )
+
+        # -------------------------
+        #   Legend
+        # -------------------------
+
+        legend = LegendSelect(linked_curves=self.tscurves_P)
+        legend.grid.setVerticalSpacing(0)
+
+        self.qgrp_legend = QtWid.QGroupBox("Legend")
+        self.qgrp_legend.setLayout(legend.grid)
+
+        # -------------------------
+        #   PlotManager
+        # -------------------------
+
+        self.plot_manager = PlotManager(parent=self)
+        self.plot_manager.add_autorange_buttons(linked_plots=self.pi_power)
+        self.plot_manager.add_preset_buttons(
+            linked_plots=self.pi_power,
+            linked_curves=self.tscurves_P,
+            presets=[
+                {
+                    "button_label": "0:30",
+                    "x_axis_label": "history (sec)",
+                    "x_axis_divisor": 1,
+                    "x_axis_range": (-30, 0),
+                },
+                {
+                    "button_label": "1:00",
+                    "x_axis_label": "history (sec)",
+                    "x_axis_divisor": 1,
+                    "x_axis_range": (-60, 0),
+                },
+            ],
+        )
+        self.plot_manager.add_clear_button(linked_curves=self.tscurves_P)
+        self.plot_manager.perform_preset(1)
+
+        qgrp_history = QtWid.QGroupBox("History")
+        qgrp_history.setLayout(self.plot_manager.grid)
+
+        # -------------------------
+        # -------------------------
 
         # 'Readings'
         p = {"readOnly": True, "maximumWidth": 112 if USE_LARGER_TEXT else 63}
-        self.qlin_reading_t = QtWid.QLineEdit(**p)
-        self.qlin_reading_1 = QtWid.QLineEdit(**p)
+        self.timestamp = QtWid.QLineEdit(**p)
+        self.P_1 = QtWid.QLineEdit(**p)
+        self.P_2 = QtWid.QLineEdit(**p)
+        self.P_3 = QtWid.QLineEdit(**p)
         self.qpbt_running = controls.create_Toggle_button(
             "Running", checked=True
         )
@@ -234,53 +307,38 @@ class MainWindow(QtWid.QWidget):
 
         # fmt: off
         grid = QtWid.QGridLayout()
-        grid.addWidget(self.qpbt_running   , 0, 0, 1, 2)
-        grid.addWidget(QtWid.QLabel("time"), 1, 0)
-        grid.addWidget(self.qlin_reading_t , 1, 1)
-        grid.addWidget(QtWid.QLabel("P [mW]") , 2, 0)
-        grid.addWidget(self.qlin_reading_1 , 2, 1)
+        grid.addWidget(self.qpbt_running       , 0, 0, 1, 2)
+        grid.addWidget(QtWid.QLabel("time")    , 1, 0)
+        grid.addWidget(self.timestamp          , 1, 1)
+        grid.addWidget(QtWid.QLabel("sec")     , 1, 2)
+        grid.addWidget(QtWid.QLabel("avg. P_1"), 2, 0)
+        grid.addWidget(self.P_1                , 2, 1)
+        grid.addWidget(QtWid.QLabel("mW")      , 2, 2)
+        grid.addWidget(QtWid.QLabel("avg. P_2"), 3, 0)
+        grid.addWidget(self.P_2                , 3, 1)
+        grid.addWidget(QtWid.QLabel("mW")      , 3, 2)
+        grid.addWidget(QtWid.QLabel("avg. P_3"), 4, 0)
+        grid.addWidget(self.P_3                , 4, 1)
+        grid.addWidget(QtWid.QLabel("mW")      , 4, 2)
         grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         # fmt: on
 
         qgrp_readings = QtWid.QGroupBox("Readings")
         qgrp_readings.setLayout(grid)
 
-        # -------------------------
-        #   PlotManager
-        # -------------------------
-
-        self.plot_manager = PlotManager(parent=self)
-        self.plot_manager.add_autorange_buttons(linked_plots=self.plot)
-        self.plot_manager.add_preset_buttons(
-            linked_plots=self.plot,
-            linked_curves=[self.history_chart_curve],
-            presets=[
-                {
-                    "button_label": "0:10",
-                    "x_axis_label": "history (sec)",
-                    "x_axis_divisor": 1,
-                    "x_axis_range": (-10.1, 0),
-                },
-                {
-                    "button_label": "0:30",
-                    "x_axis_label": "history (sec)",
-                    "x_axis_divisor": 1,
-                    "x_axis_range": (-30.1, 0),
-                },
-            ],
-        )
-        self.plot_manager.add_clear_button(
-            linked_curves=[self.history_chart_curve]
-        )
-        self.plot_manager.perform_preset(1)
-
-        qgrp_chart = QtWid.QGroupBox("Chart")
-        qgrp_chart.setLayout(self.plot_manager.grid)
-
         vbox = QtWid.QVBoxLayout()
+        vbox.addWidget(
+            self.qgrp_legend,
+            stretch=0,
+            alignment=QtCore.Qt.AlignmentFlag.AlignTop,
+        )
+        vbox.addWidget(
+            qgrp_history,
+            stretch=0,
+            alignment=QtCore.Qt.AlignmentFlag.AlignTop,
+        )
         vbox.addWidget(qgrp_readings)
-        vbox.addWidget(qgrp_chart)
-        vbox.addStretch()
+        vbox.addStretch(1)
 
         # Round up bottom frame
         hbox_bot = QtWid.QHBoxLayout()
@@ -322,9 +380,11 @@ class MainWindow(QtWid.QWidget):
             else ""
         )
 
-        if self.do_update_readings_GUI:
-            self.qlin_reading_t.setText(f"{state.time[0]:.3f}")
-            self.qlin_reading_1.setText(f"{state.P_mW[0]:.4f}")
+        if self.do_update_readings_GUI and state.time.is_full:
+            self.timestamp.setText(f"{state.time[0]:.1f}")
+            self.P_1.setText(f"{np.mean(state.P_1):.2f}")
+            self.P_2.setText(f"{np.mean(state.P_2):.2f}")
+            self.P_3.setText(f"{np.mean(state.P_3):.2f}")
 
     @Slot()
     def update_chart(self):
@@ -332,7 +392,8 @@ class MainWindow(QtWid.QWidget):
             if DEBUG:
                 tprint("update_curve")
 
-            self.history_chart_curve.update()
+            for tscurve in self.tscurves_P:
+                tscurve.update()
 
 
 # ------------------------------------------------------------------------------
@@ -392,7 +453,9 @@ if __name__ == "__main__":
             return False
 
         # Add readings to chart history
-        window.history_chart_curve.extendData(ard.state.time, ard.state.P_mW)
+        window.tscurves_P[0].extendData(ard.state.time, ard.state.P_1)
+        window.tscurves_P[1].extendData(ard.state.time, ard.state.P_2)
+        window.tscurves_P[2].extendData(ard.state.time, ard.state.P_3)
 
         # Add readings to the log
         log.update()
@@ -410,10 +473,10 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     def write_header_to_log():
-        log.write("time [s]\tP [mW]\n")
+        log.write("time [s]\tP_1 [mW]\n")
 
     def write_data_to_log():
-        np_data = np.column_stack((ard.state.time, ard.state.P_mW))
+        np_data = np.column_stack((ard.state.time, ard.state.P_1))
         log.np_savetxt(np_data, "%.4f\t%.4f")
 
     log = FileLogger(
