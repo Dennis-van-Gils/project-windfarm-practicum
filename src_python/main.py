@@ -43,7 +43,7 @@ TRY_USING_OPENGL = True
 USE_LARGER_TEXT = False
 
 # Show debug info in terminal? Warning: Slow! Do not leave on unintentionally.
-DEBUG = False
+DEBUG = True
 
 print(f"{qtpy.API_NAME:9s} {qtpy.QT_VERSION}")  # type: ignore
 print(f"PyQtGraph {pg.__version__}")
@@ -107,6 +107,7 @@ class MainWindow(QtWid.QWidget):
         self.setGeometry(40, 60, 960, 660)
         self.setStyleSheet(controls.SS_TEXTBOX_READ_ONLY + controls.SS_GROUP)
 
+        """
         # -------------------------
         #   Chart refresh timer
         # -------------------------
@@ -114,6 +115,7 @@ class MainWindow(QtWid.QWidget):
         self.timer_chart = QtCore.QTimer()
         self.timer_chart.setTimerType(QtCore.Qt.TimerType.PreciseTimer)
         self.timer_chart.timeout.connect(self.update_chart)
+        """
 
         # -------------------------
         #   Top frame
@@ -425,8 +427,10 @@ class MainWindow(QtWid.QWidget):
             self.P_2.setText(f"{np.mean(state.P_2):.2f}")
             self.P_3.setText(f"{np.mean(state.P_3):.2f}")
 
-    @Slot()
-    def update_chart(self):
+        """
+        @Slot()
+        def update_chart(self):
+        """
         if self.do_update_readings_GUI:
             if DEBUG:
                 tprint("update_chart")
@@ -456,8 +460,6 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     ard = WindTurbineArduino(ring_buffer_capacity=100)
-
-    ard.serial_settings["baudrate"] = 115200
     ard.auto_connect()
     ard.turn_on()
 
@@ -502,6 +504,14 @@ if __name__ == "__main__":
         # Add readings to the log
         log.update()
 
+        # Work-around for the jobs thread not getting fairly granted a mutex
+        # lock on the device mutex `dev.mutex`. It can sometimes wait multiple
+        # lock-unlock cycles of the DAQ thread, before the jobs thread is
+        # granted a lock. The `QDeviceIO` library should actually be rewritten
+        # slightly to make use of a locking queue in combination with a
+        # `QWaitCondition` and `wakeAll()`. ChatGPT.
+        QtCore.QThread.msleep(10)
+
         return True
 
     ard_qdev = WindTurbine_qdev(
@@ -542,11 +552,14 @@ if __name__ == "__main__":
         app.processEvents()
         log.close()
         ard_qdev.quit()
+        ard.turn_off()
         ard.close()
 
+        """
         print("Stopping timers: ", end="")
         window.timer_chart.stop()
         print("done.")
+        """
 
     def about_to_quit():
         print("\nAbout to quit")
@@ -557,7 +570,7 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     window = MainWindow(qdev=ard_qdev, qlog=log)
-    window.timer_chart.start(CHART_INTERVAL_MS)
+    """window.timer_chart.start(CHART_INTERVAL_MS)"""
     window.show()
 
     ard_qdev.start()
