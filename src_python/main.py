@@ -43,7 +43,7 @@ TRY_USING_OPENGL = True
 USE_LARGER_TEXT = False
 
 # Show debug info in terminal? Warning: Slow! Do not leave on unintentionally.
-DEBUG = True
+DEBUG = False
 
 print(f"{qtpy.API_NAME:9s} {qtpy.QT_VERSION}")  # type: ignore
 print(f"PyQtGraph {pg.__version__}")
@@ -318,6 +318,12 @@ class MainWindow(QtWid.QWidget):
                     "x_axis_divisor": 1,
                     "x_axis_range": (-60, 0),
                 },
+                {
+                    "button_label": "5:00",
+                    "x_axis_label": "history (min)",
+                    "x_axis_divisor": 60,
+                    "x_axis_range": (-5, 0),
+                },
             ],
         )
         self.plot_manager.add_clear_button(linked_curves=self.tscurves_all)
@@ -347,8 +353,8 @@ class MainWindow(QtWid.QWidget):
         # fmt: off
         i = 0
         grid = QtWid.QGridLayout()
-        grid.addWidget(self.qpbt_running       , i, 0, 1, 2); i+=1
-        grid.addWidget(self.qpbt_reset_E       , i, 0, 1, 2); i+=1
+        grid.addWidget(self.qpbt_running       , i, 0, 1, 3); i+=1
+        grid.addWidget(self.qpbt_reset_E       , i, 0, 1, 3); i+=1
         grid.addWidget(QtWid.QLabel("time")    , i, 0)
         grid.addWidget(self.timestamp          , i, 1)
         grid.addWidget(QtWid.QLabel("sec")     , i, 2); i+=1
@@ -459,7 +465,7 @@ if __name__ == "__main__":
     #   Connect to Arduino
     # --------------------------------------------------------------------------
 
-    ard = WindTurbineArduino(ring_buffer_capacity=100)
+    ard = WindTurbineArduino(ring_buffer_capacity=15)
     ard.auto_connect()
     ard.turn_on()
 
@@ -525,11 +531,26 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     def write_header_to_log():
-        log.write("time [s]\tP_1 [mW]\n")
+        log.write(
+            "time [s]\t"
+            "P_1 [mW]\tE_1 [J]\t"
+            "P_2 [mW]\tE_2 [J]\t"
+            "P_3 [mW]\tE_3 [J]\n"
+        )
 
     def write_data_to_log():
-        np_data = np.column_stack((ard.state.time, ard.state.P_1))
-        log.np_savetxt(np_data, "%.4f\t%.4f")
+        np_data = np.column_stack(
+            (
+                ard.state.time,
+                ard.state.P_1,
+                ard.state.E_1,
+                ard.state.P_2,
+                ard.state.E_2,
+                ard.state.P_3,
+                ard.state.E_3,
+            )
+        )
+        log.np_savetxt(np_data, "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f")
 
     log = FileLogger(
         write_header_function=write_header_to_log,

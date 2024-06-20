@@ -6,7 +6,7 @@ Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "19-06-2024"
+__date__ = "20-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 
@@ -24,7 +24,7 @@ class WindTurbineArduino(Arduino):
     class State:
         """Container for the measurement values of the wind turbine Arduino."""
 
-        def __init__(self, capacity: int = 100):
+        def __init__(self, capacity):
             self.capacity = capacity
             """Ring buffer capacity"""
 
@@ -79,7 +79,7 @@ class WindTurbineArduino(Arduino):
         name="Ard",
         long_name="Arduino",
         connect_to_specific_ID="Wind Turbine",
-        ring_buffer_capacity: int = 100,
+        ring_buffer_capacity: int = 15,
     ):
         super().__init__(
             name=name,
@@ -88,7 +88,7 @@ class WindTurbineArduino(Arduino):
         )
 
         # Container for the measurement values
-        self.state = self.State(ring_buffer_capacity)
+        self.state = self.State(capacity=ring_buffer_capacity)
 
     # --------------------------------------------------------------------------
     #   Arduino commands
