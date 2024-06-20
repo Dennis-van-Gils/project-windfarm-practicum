@@ -146,12 +146,12 @@ void setup() {
   for (auto &ina228 : ina228_sensors) {
     uint8_t i2c_address = ina228_addresses[i];
     if (!ina228.begin(i2c_address, &Wire, SKIP_RESET)) {
-      Ser.print("Couldn't find INA228 chip at address ");
+      Ser.print("Couldn't find INA228 chip at address 0x");
       Ser.println(i2c_address, HEX);
       while (1) {}
     }
-    Ser.print("Found INA228 chip at address ");
-    Ser.println(i2c_address, HEX);
+    // Ser.print("Found INA228 chip at address 0x");
+    // Ser.println(i2c_address, HEX);
     i++;
 
     ina228.setShunt(R_SHUNT, MAX_CURRENT);
@@ -162,11 +162,12 @@ void setup() {
     ina228.setAveragingCount(INA228_COUNT_4);
 
     // [us] 50, 84, 150, 280, 540, 1052, 2074, 4120
-    ina228.setCurrentConversionTime(INA228_TIME_150_us);
-    ina228.setVoltageConversionTime(INA228_TIME_150_us);
+    ina228.setCurrentConversionTime(INA228_TIME_4120_us);
+    ina228.setVoltageConversionTime(INA228_TIME_4120_us);
     ina228.setTemperatureConversionTime(INA228_TIME_50_us);
 
     // Report settings to terminal
+    /*
     Ser.print("ADC range      : ");
     Ser.println(ina228.getADCRange());
     Ser.print("Mode           : ");
@@ -180,6 +181,7 @@ void setup() {
     Ser.print("Temperature conversion time: ");
     Ser.println(ina228.getTemperatureConversionTime());
     Ser.println();
+    */
   }
 
 // Finished setup and idle
@@ -262,7 +264,7 @@ void loop() {
     Acquire data
   ----------------------------------------------------------------------------*/
 
-  if (DAQ_running) {
+  if (DAQ_running && ina228_sensors[0].conversionReady()) {
     snprintf(buf, BUFLEN,
              "%lu\t" // Timestamp millis [ms]
              "%u",   // Timestamp micros part [us]
