@@ -18,12 +18,13 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 19-06-2024
+Dennis van Gils, 20-06-2024
 */
 
 #include <Arduino.h>
 
 #include "Adafruit_INA228.h"
+#include "Adafruit_NeoPixel.h"
 #include "DvG_SerialCommand.h"
 
 // INA228 current sensors
@@ -53,6 +54,35 @@ DvG_SerialCommand sc(Ser);
 // General string buffer
 const int BUFLEN = 1024;
 char buf[BUFLEN];
+
+// Figure out the onboard RGB led, if any
+#if defined(_VARIANT_FEATHER_M4_)
+#  define HAS_DOTSTAR 0
+#  define HAS_NEOPIXEL 1
+#elif defined(_VARIANT_ITSYBITSY_M4_)
+#  define HAS_DOTSTAR 1
+#  define HAS_NEOPIXEL 0
+#else
+#  define HAS_DOTSTAR 0
+#  define HAS_NEOPIXEL 0
+#endif
+
+#if HAS_NEOPIXEL
+#  include "Adafruit_NeoPixel.h"
+Adafruit_NeoPixel led_rgb(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+#endif
+
+#if HAS_DOTSTAR
+#  include <Adafruit_DotStar.h>
+Adafruit_DotStar led_rgb(DOTSTAR_NUM, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLK,
+                         DOTSTAR_BGR);
+#endif
+
+#if HAS_NEOPIXEL || HAS_DOTSTAR
+const uint32_t LED_COLOR_SETUP = led_rgb.Color(0, 0, 6);
+const uint32_t LED_COLOR_IDLE = led_rgb.Color(0, 6, 0);
+const uint32_t LED_COLOR_DAQ_RUNNING = led_rgb.Color(6, 6, 0);
+#endif
 
 /*------------------------------------------------------------------------------
   Time keeping
@@ -99,6 +129,14 @@ void get_systick_timestamp(uint32_t *stamp_millis,
 void setup() {
   asm(".global _printf_float"); // Enables float support for `snprintf()`
 
+// Starting setup
+#if HAS_NEOPIXEL || HAS_DOTSTAR
+  led_rgb.begin();
+  led_rgb.setBrightness(255);
+  led_rgb.setPixelColor(0, LED_COLOR_SETUP);
+  led_rgb.show();
+#endif
+
   Ser.begin(115200);
   while (!Ser) { // Wait until serial port is opened
     delay(10);
@@ -143,6 +181,12 @@ void setup() {
     Ser.println(ina228.getTemperatureConversionTime());
     Ser.println();
   }
+
+// Finished setup and idle
+#if HAS_NEOPIXEL || HAS_DOTSTAR
+  led_rgb.setPixelColor(0, LED_COLOR_IDLE);
+  led_rgb.show();
+#endif
 }
 
 /*------------------------------------------------------------------------------
@@ -152,6 +196,7 @@ void setup() {
 void loop() {
   char *strCmd; // Incoming serial command string
   static bool DAQ_running = false;
+  bool prev_DAQ_running = DAQ_running;
   float I; // [mA] Current
   float V; // [mV] Bus voltage
   float E; // [J]  Energy
@@ -195,6 +240,23 @@ void loop() {
       }
     }
   }
+
+  /*----------------------------------------------------------------------------
+    LED indicator
+  ----------------------------------------------------------------------------*/
+
+#if HAS_NEOPIXEL || HAS_DOTSTAR
+  if (DAQ_running != prev_DAQ_running) {
+    prev_DAQ_running = DAQ_running;
+    if (DAQ_running) {
+      led_rgb.setPixelColor(0, LED_COLOR_DAQ_RUNNING);
+      led_rgb.show();
+    } else {
+      led_rgb.setPixelColor(0, LED_COLOR_IDLE);
+      led_rgb.show();
+    }
+  }
+#endif
 
   /*----------------------------------------------------------------------------
     Acquire data
