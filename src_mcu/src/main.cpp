@@ -207,10 +207,8 @@ void loop() {
   // float T_die;   // ['C] Die temperature
 
   // Time keeping
-  uint32_t millis_copy;
+  uint32_t millis_copy = millis();
   uint16_t micros_part;
-
-  get_systick_timestamp(&millis_copy, &micros_part);
 
   /*----------------------------------------------------------------------------
     Process incoming serial commands every PERIOD_SC milliseconds
@@ -265,6 +263,8 @@ void loop() {
   ----------------------------------------------------------------------------*/
 
   if (DAQ_running && ina228_sensors[0].conversionReady()) {
+    get_systick_timestamp(&millis_copy, &micros_part);
+
     snprintf(buf, BUFLEN,
              "%lu\t" // Timestamp millis [ms]
              "%u",   // Timestamp micros part [us]
