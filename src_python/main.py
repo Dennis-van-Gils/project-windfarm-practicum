@@ -37,7 +37,6 @@ from WindTurbine_qdev import WindTurbine_qdev
 
 # Constants
 CHART_CAPACITY = int(1e4)  # [number of points]
-CHART_INTERVAL_MS = 100  # [ms]
 
 # Global flags
 TRY_USING_OPENGL = True
@@ -107,16 +106,6 @@ class MainWindow(QtWid.QWidget):
         self.setWindowTitle("Arduino wind turbine")
         self.setGeometry(40, 60, 960, 660)
         self.setStyleSheet(controls.SS_TEXTBOX_READ_ONLY + controls.SS_GROUP)
-
-        """
-        # -------------------------
-        #   Chart refresh timer
-        # -------------------------
-
-        self.timer_chart = QtCore.QTimer()
-        self.timer_chart.setTimerType(QtCore.Qt.TimerType.PreciseTimer)
-        self.timer_chart.timeout.connect(self.update_chart)
-        """
 
         # -------------------------
         #   Top frame
@@ -409,6 +398,13 @@ class MainWindow(QtWid.QWidget):
     #   Handle controls
     # --------------------------------------------------------------------------
 
+    def link_legend_to_tscurves_E(self):
+        """Legend currently only hides/shows the power curves. I'd like to have
+        the energy curves follow the visibility of the power curves. We have to
+        add them in manually, hence this method."""
+        for idx, tscurve_P in enumerate(self.tscurves_P):
+            self.tscurves_E[idx].setVisible(tscurve_P.isVisible())
+
     @Slot()
     def process_qpbt_reset_E(self):
         msgbox = QtWid.QMessageBox()
@@ -455,17 +451,14 @@ class MainWindow(QtWid.QWidget):
             else ""
         )
 
+        self.link_legend_to_tscurves_E()
+
         if self.do_update_readings_GUI and state.time.is_full:
             self.timestamp.setText(f"{state.time[0]:.1f}")
             self.P_1.setText(f"{np.mean(state.P_1):.2f}")
             self.P_2.setText(f"{np.mean(state.P_2):.2f}")
             self.P_3.setText(f"{np.mean(state.P_3):.2f}")
 
-        """
-        @Slot()
-        def update_chart(self):
-        """
-        if self.do_update_readings_GUI:
             if DEBUG:
                 tprint("update_chart")
 
@@ -605,12 +598,6 @@ if __name__ == "__main__":
         ard.turn_off()
         ard.close()
 
-        """
-        print("Stopping timers: ", end="")
-        window.timer_chart.stop()
-        print("done.")
-        """
-
     def about_to_quit():
         print("\nAbout to quit")
         stop_running()
@@ -620,7 +607,6 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
 
     window = MainWindow(qdev=ard_qdev, qlog=log)
-    """window.timer_chart.start(CHART_INTERVAL_MS)"""
     window.show()
 
     ard_qdev.start()
