@@ -11,6 +11,7 @@ __version__ = "1.0"
 # pylint: disable=missing-docstring
 
 import serial
+import numpy as np
 
 from dvg_devices.Arduino_protocol_serial import Arduino
 from dvg_debug_functions import print_fancy_traceback as pft
@@ -116,11 +117,11 @@ class WindTurbineArduino(Arduino):
         parts = line.strip("\n").split("\t")
 
         try:
-            time_millis = int(parts[0])
-            time_micros = int(parts[1])
-            I_1 = float(parts[2])
-            V_1 = float(parts[3])
-            E_1 = float(parts[4])
+            time_millis = int(parts[0])  # [ms]
+            time_micros = int(parts[1])  # [us] fraction
+            I_1 = float(parts[2])  # [mA]
+            V_1 = float(parts[3])  # [mV]
+            E_1 = float(parts[4])  # [J]
             I_2 = float(parts[5])
             V_2 = float(parts[6])
             E_2 = float(parts[7])
@@ -134,21 +135,29 @@ class WindTurbineArduino(Arduino):
             pft("Failed to convert Arduino data into numeric values.")
             return False
 
-        self.state.time.append(time_millis / 1e3 + time_micros / 1e6)
-        self.state.I_1.append(I_1)
-        self.state.I_2.append(I_2)
-        self.state.I_3.append(I_3)
-        self.state.V_1.append(V_1)
-        self.state.V_2.append(V_2)
-        self.state.V_3.append(V_3)
-        self.state.E_1.append(E_1)
-        self.state.E_2.append(E_2)
-        self.state.E_3.append(E_3)
-
         # Derived
-        self.state.P_1.append(I_1 * V_1 / 1e3)
-        self.state.P_2.append(I_2 * V_2 / 1e3)
-        self.state.P_3.append(I_3 * V_3 / 1e3)
+        P_1 = np.maximum(I_1 * V_1 / 1e3, 0)  # [mW]
+        P_2 = np.maximum(I_2 * V_2 / 1e3, 0)
+        P_3 = np.maximum(I_3 * V_3 / 1e3, 0)
+
+        self.state.time.append(time_millis / 1e3 + time_micros / 1e6)
+
+        self.state.I_1.append(I_1)
+        self.state.V_1.append(V_1)
+        self.state.E_1.append(E_1)
+        self.state.P_1.append(P_1)
+
+        self.state.I_2.append(I_2)
+        self.state.V_2.append(V_2)
+        self.state.E_2.append(E_2)
+        self.state.P_2.append(P_2)
+
+        self.state.I_3.append(I_3)
+        self.state.V_3.append(V_3)
+        self.state.E_3.append(E_3)
+        self.state.P_3.append(P_3)
+
+        print(f"{V_1:+5.0f} mV | {I_1:+6.2f} mA | {P_1:6.3f} mW")
 
         return True
 
