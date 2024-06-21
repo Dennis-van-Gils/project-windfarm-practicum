@@ -350,8 +350,8 @@ class MainWindow(QtWid.QWidget):
         self.qpbt_running.clicked.connect(
             lambda state: self.process_qpbt_running(state)
         )
-        self.qpbt_reset_E = QtWid.QPushButton("Reset energy")
-        self.qpbt_reset_E.clicked.connect(qdev.reset_accumulators)
+        self.qpbt_reset_E = QtWid.QPushButton("Reset\naccumulated energy")
+        self.qpbt_reset_E.clicked.connect(self.process_qpbt_reset_E)
 
         # fmt: off
         i = 0
@@ -407,6 +407,28 @@ class MainWindow(QtWid.QWidget):
     # --------------------------------------------------------------------------
     #   Handle controls
     # --------------------------------------------------------------------------
+
+    @Slot()
+    def process_qpbt_reset_E(self):
+        msgbox = QtWid.QMessageBox()
+        msgbox.setIcon(QtWid.QMessageBox.Icon.Information)
+        msgbox.setWindowTitle("Reset accumulated energy")
+        msgbox.setText(
+            "Are you sure you want to reset\n"
+            "all accumulated energy to 0 joule?"
+        )
+        msgbox.setStandardButtons(
+            QtWid.QMessageBox.StandardButton.Cancel
+            | QtWid.QMessageBox.StandardButton.Ok
+        )
+        msgbox.setDefaultButton(QtWid.QMessageBox.StandardButton.Cancel)
+        reply = msgbox.exec()
+
+        if reply == QtWid.QMessageBox.StandardButton.Ok:
+            self.qdev.reset_accumulators()
+            # msgbox.setText("Energy is reset to 0.")
+            # msgbox.setStandardButtons(QtWid.QMessageBox.StandardButton.Ok)
+            # msgbox.exec()
 
     @Slot(bool)
     def process_qpbt_running(self, state: bool):
