@@ -6,7 +6,7 @@ Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "20-06-2024"
+__date__ = "21-06-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 

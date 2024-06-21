@@ -205,6 +205,7 @@ class MainWindow(QtWid.QWidget):
 
         self.pi_energy: pg.PlotItem = self.gw.addPlot(row=1, col=0)
         self.pi_energy.setLabel("left", text="energy : E (J)", **p)
+        self.pi_energy.enableAutoRange(axis="y")
 
         self.pi_all = [self.pi_power, self.pi_energy]
         # List of all PlotItems
@@ -238,19 +239,19 @@ class MainWindow(QtWid.QWidget):
         self.tscurves_P.append(
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
-                linked_curve=self.pi_power.plot(pen=pen_1, name="Turbine 1"),
+                linked_curve=self.pi_power.plot(pen=pen_1, name="Turbine #1"),
             )
         )
         self.tscurves_P.append(
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
-                linked_curve=self.pi_power.plot(pen=pen_2, name="Turbine 2"),
+                linked_curve=self.pi_power.plot(pen=pen_2, name="Turbine #2"),
             )
         )
         self.tscurves_P.append(
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
-                linked_curve=self.pi_power.plot(pen=pen_3, name="Turbine 3"),
+                linked_curve=self.pi_power.plot(pen=pen_3, name="Turbine #3"),
             )
         )
 
@@ -260,19 +261,19 @@ class MainWindow(QtWid.QWidget):
         self.tscurves_E.append(
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
-                linked_curve=self.pi_energy.plot(pen=pen_1, name="Turbine 1"),
+                linked_curve=self.pi_energy.plot(pen=pen_1, name="Turbine #1"),
             )
         )
         self.tscurves_E.append(
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
-                linked_curve=self.pi_energy.plot(pen=pen_2, name="Turbine 2"),
+                linked_curve=self.pi_energy.plot(pen=pen_2, name="Turbine #2"),
             )
         )
         self.tscurves_E.append(
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
-                linked_curve=self.pi_energy.plot(pen=pen_3, name="Turbine 3"),
+                linked_curve=self.pi_energy.plot(pen=pen_3, name="Turbine #3"),
             )
         )
 
@@ -334,6 +335,9 @@ class MainWindow(QtWid.QWidget):
         self.P_1 = QtWid.QLineEdit(**p)
         self.P_2 = QtWid.QLineEdit(**p)
         self.P_3 = QtWid.QLineEdit(**p)
+        self.E_1 = QtWid.QLineEdit(**p)
+        self.E_2 = QtWid.QLineEdit(**p)
+        self.E_3 = QtWid.QLineEdit(**p)
         self.qpbt_running = controls.create_Toggle_button(
             "Running", checked=True
         )
@@ -348,18 +352,24 @@ class MainWindow(QtWid.QWidget):
         grid = QtWid.QGridLayout()
         grid.addWidget(self.qpbt_running       , i, 0, 1, 3); i+=1
         grid.addWidget(self.qpbt_reset_E       , i, 0, 1, 3); i+=1
-        grid.addWidget(QtWid.QLabel("time")    , i, 0)
+        grid.addWidget(QtWid.QLabel("Time")    , i, 0)
         grid.addWidget(self.timestamp          , i, 1)
         grid.addWidget(QtWid.QLabel("sec")     , i, 2); i+=1
-        grid.addWidget(QtWid.QLabel("avg. P_1"), i, 0)
+
+        #grid.addWidget(QtWid.QLabel("#") , i, 0)
+        grid.addWidget(QtWid.QLabel("P (mW)")  , i, 1)
+        grid.addWidget(QtWid.QLabel("E (J)")   , i, 2); i+=1
+
+        grid.addWidget(QtWid.QLabel("#1")      , i, 0)
         grid.addWidget(self.P_1                , i, 1)
-        grid.addWidget(QtWid.QLabel("mW")      , i, 2); i+=1
-        grid.addWidget(QtWid.QLabel("avg. P_2"), i, 0)
+        grid.addWidget(self.E_1                , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("#2")      , i, 0)
         grid.addWidget(self.P_2                , i, 1)
-        grid.addWidget(QtWid.QLabel("mW")      , i, 2); i+=1
-        grid.addWidget(QtWid.QLabel("avg. P_3"), i, 0)
+        grid.addWidget(self.E_2                , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("#3")      , i, 0)
         grid.addWidget(self.P_3                , i, 1)
-        grid.addWidget(QtWid.QLabel("mW")      , i, 2)
+        grid.addWidget(self.E_3                , i, 2); i+=1
+
         grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         # fmt: on
 
@@ -367,6 +377,7 @@ class MainWindow(QtWid.QWidget):
         qgrp_readings.setLayout(grid)
 
         vbox = QtWid.QVBoxLayout()
+        vbox.addWidget(qgrp_readings)
         vbox.addWidget(
             self.qgrp_legend,
             stretch=0,
@@ -377,7 +388,6 @@ class MainWindow(QtWid.QWidget):
             stretch=0,
             alignment=QtCore.Qt.AlignmentFlag.AlignTop,
         )
-        vbox.addWidget(qgrp_readings)
         vbox.addStretch(1)
 
         # Round up bottom frame
@@ -458,6 +468,9 @@ class MainWindow(QtWid.QWidget):
             self.P_1.setText(f"{np.mean(state.P_1):.2f}")
             self.P_2.setText(f"{np.mean(state.P_2):.2f}")
             self.P_3.setText(f"{np.mean(state.P_3):.2f}")
+            self.E_1.setText(f"{state.E_1[-1]:.3f}")
+            self.E_2.setText(f"{state.E_2[-1]:.3f}")
+            self.E_3.setText(f"{state.E_3[-1]:.3f}")
 
             if DEBUG:
                 tprint("update_chart")
