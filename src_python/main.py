@@ -123,15 +123,18 @@ class MainWindow(QtWid.QWidget):
 
         # Left box
         self.qlbl_update_counter = QtWid.QLabel("0")
-        self.qlbl_DAQ_rate = QtWid.QLabel("DAQ: nan Hz")
-        self.qlbl_DAQ_rate.setStyleSheet("QLabel {min-width: 7em}")
+        self.qlbl_DAQ_rate_1 = QtWid.QLabel("DAQ: nan blocks/s")
+        self.qlbl_DAQ_rate_1.setStyleSheet("QLabel {min-width: 7em}")
+        self.qlbl_DAQ_rate_2 = QtWid.QLabel("DAQ: nan Hz")
+        self.qlbl_DAQ_rate_2.setStyleSheet("QLabel {min-width: 7em}")
         self.qlbl_recording_time = QtWid.QLabel()
 
         vbox_left = QtWid.QVBoxLayout()
         vbox_left.addWidget(self.qlbl_update_counter, stretch=0)
         vbox_left.addStretch(1)
         vbox_left.addWidget(self.qlbl_recording_time, stretch=0)
-        vbox_left.addWidget(self.qlbl_DAQ_rate, stretch=0)
+        vbox_left.addWidget(self.qlbl_DAQ_rate_1, stretch=0)
+        vbox_left.addWidget(self.qlbl_DAQ_rate_2, stretch=0)
 
         # Middle box
         self.qlbl_title = QtWid.QLabel("Arduino wind turbine")
@@ -417,9 +420,11 @@ class MainWindow(QtWid.QWidget):
 
         self.qlbl_cur_date_time.setText(f"{str_cur_date}    {str_cur_time}")
         self.qlbl_update_counter.setText(f"{self.qdev.update_counter_DAQ}")
-        self.qlbl_DAQ_rate.setText(
-            f"DAQ: {self.qdev.obtained_DAQ_rate_Hz:.2f} blocks/s | "
-            f"{self.qdev.obtained_DAQ_rate_Hz * state.capacity:.1f} Hz"
+        self.qlbl_DAQ_rate_1.setText(
+            f"DAQ: {self.qdev.obtained_DAQ_rate_Hz:.2f} blocks/s"
+        )
+        self.qlbl_DAQ_rate_2.setText(
+            f"DAQ: {self.qdev.obtained_DAQ_rate_Hz * state.capacity:.1f} Hz"
         )
         self.qlbl_recording_time.setText(
             f"REC: {self.qlog.pretty_elapsed()}"
