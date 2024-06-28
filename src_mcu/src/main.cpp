@@ -18,7 +18,7 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 20-06-2024
+Dennis van Gils, 28-06-2024
 */
 
 #include <Arduino.h>
@@ -36,6 +36,7 @@ Adafruit_INA228 ina228_sensors[] = {
 
 // INA228 I2C addresses
 uint8_t ina228_addresses[] = {0x40, 0x41, 0x44};
+// uint8_t ina228_addresses[] = {0x43, 0x45, 0x4c};
 
 // [Ohm] Shunt resistor internal to Adafruit INA228
 const float R_SHUNT = 0.015;
