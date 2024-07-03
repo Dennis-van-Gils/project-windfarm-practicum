@@ -6,7 +6,7 @@ Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "21-06-2024"
+__date__ = "03-07-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 
@@ -38,12 +38,24 @@ class WindTurbineArduino(Arduino):
             """Current [mA]"""
             self.I_3 = RingBuffer(capacity)
             """Current [mA]"""
+            self.I_4 = RingBuffer(capacity)
+            """Current [mA]"""
+            self.I_5 = RingBuffer(capacity)
+            """Current [mA]"""
+            self.I_6 = RingBuffer(capacity)
+            """Current [mA]"""
 
             self.V_1 = RingBuffer(capacity)
             """Bus voltage [mV]"""
             self.V_2 = RingBuffer(capacity)
             """Bus voltage [mV]"""
             self.V_3 = RingBuffer(capacity)
+            """Bus voltage [mV]"""
+            self.V_4 = RingBuffer(capacity)
+            """Bus voltage [mV]"""
+            self.V_5 = RingBuffer(capacity)
+            """Bus voltage [mV]"""
+            self.V_6 = RingBuffer(capacity)
             """Bus voltage [mV]"""
 
             self.E_1 = RingBuffer(capacity)
@@ -52,6 +64,12 @@ class WindTurbineArduino(Arduino):
             """Accumulated energy [J]"""
             self.E_3 = RingBuffer(capacity)
             """Accumulated energy [J]"""
+            self.E_4 = RingBuffer(capacity)
+            """Accumulated energy [J]"""
+            self.E_5 = RingBuffer(capacity)
+            """Accumulated energy [J]"""
+            self.E_6 = RingBuffer(capacity)
+            """Accumulated energy [J]"""
 
             self.P_1 = RingBuffer(capacity)
             """Power [mW]"""
@@ -59,14 +77,20 @@ class WindTurbineArduino(Arduino):
             """Power [mW]"""
             self.P_3 = RingBuffer(capacity)
             """Power [mW]"""
+            self.P_4 = RingBuffer(capacity)
+            """Power [mW]"""
+            self.P_5 = RingBuffer(capacity)
+            """Power [mW]"""
+            self.P_6 = RingBuffer(capacity)
+            """Power [mW]"""
 
             # fmt: off
             self._ringbuffers = [
                 self.time,
-                self.I_1, self.I_2, self.I_3,
-                self.V_1, self.V_2, self.V_3,
-                self.E_1, self.E_2, self.E_3,
-                self.P_1, self.P_2, self.P_3,
+                self.I_1, self.I_2, self.I_3, self.I_4, self.I_5, self.I_6,
+                self.V_1, self.V_2, self.V_3, self.V_4, self.V_5, self.V_6,
+                self.E_1, self.E_2, self.E_3, self.E_4, self.E_5, self.E_6,
+                self.P_1, self.P_2, self.P_3, self.P_4, self.P_5, self.P_6,
             ]
             """List of all ring buffers"""
             # fmt: on
@@ -128,6 +152,15 @@ class WindTurbineArduino(Arduino):
             I_3 = float(parts[8])
             V_3 = float(parts[9])
             E_3 = float(parts[10])
+            I_4 = float(parts[11])
+            V_4 = float(parts[12])
+            E_4 = float(parts[13])
+            I_5 = float(parts[14])
+            V_5 = float(parts[15])
+            E_5 = float(parts[16])
+            I_6 = float(parts[17])
+            V_6 = float(parts[18])
+            E_6 = float(parts[19])
         except IndexError:
             pft("Received an incorrect number of values from the Arduino.")
             return False
@@ -139,6 +172,9 @@ class WindTurbineArduino(Arduino):
         P_1 = np.maximum(I_1 * V_1 / 1e3, 0)  # [mW]
         P_2 = np.maximum(I_2 * V_2 / 1e3, 0)
         P_3 = np.maximum(I_3 * V_3 / 1e3, 0)
+        P_4 = np.maximum(I_4 * V_4 / 1e3, 0)
+        P_5 = np.maximum(I_5 * V_5 / 1e3, 0)
+        P_6 = np.maximum(I_6 * V_6 / 1e3, 0)
 
         self.state.time.append(time_millis / 1e3 + time_micros / 1e6)
 
@@ -156,6 +192,21 @@ class WindTurbineArduino(Arduino):
         self.state.V_3.append(V_3)
         self.state.E_3.append(E_3)
         self.state.P_3.append(P_3)
+
+        self.state.I_4.append(I_4)
+        self.state.V_4.append(V_4)
+        self.state.E_4.append(E_4)
+        self.state.P_4.append(P_4)
+
+        self.state.I_5.append(I_5)
+        self.state.V_5.append(V_5)
+        self.state.E_5.append(E_5)
+        self.state.P_5.append(P_5)
+
+        self.state.I_6.append(I_6)
+        self.state.V_6.append(V_6)
+        self.state.E_6.append(E_6)
+        self.state.P_6.append(P_6)
 
         print(f"{V_1:+5.0f} mV | {I_1:+6.2f} mA | {P_1:6.3f} mW")
 

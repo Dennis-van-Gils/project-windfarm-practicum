@@ -229,9 +229,13 @@ class MainWindow(QtWid.QWidget):
         #   Create history charts
         # -------------------------
 
-        pen_1 = pg.mkPen(color=(255, 30, 180), width=3)
-        pen_2 = pg.mkPen(color=(255, 255, 90), width=3)
-        pen_3 = pg.mkPen(color=(0, 255, 255), width=3)
+        pen_width = 5
+        pen_1 = pg.mkPen(color=controls.COLOR_PEN_RED, width=pen_width)
+        pen_2 = pg.mkPen(color=controls.COLOR_PEN_ORANGE, width=pen_width)
+        pen_3 = pg.mkPen(color=controls.COLOR_PEN_YELLOW, width=pen_width)
+        pen_4 = pg.mkPen(color=controls.COLOR_PEN_GREEN, width=pen_width)
+        pen_5 = pg.mkPen(color=controls.COLOR_PEN_TURQUOISE, width=pen_width)
+        pen_6 = pg.mkPen(color=controls.COLOR_PEN_BLUE, width=pen_width)
 
         self.tscurves_P: list[ThreadSafeCurve] = []
         """List of all ThreadSafeCurves for plotting the power [mW]"""
@@ -254,6 +258,24 @@ class MainWindow(QtWid.QWidget):
                 linked_curve=self.pi_power.plot(pen=pen_3, name="Turbine #3"),
             )
         )
+        self.tscurves_P.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_power.plot(pen=pen_4, name="Turbine #4"),
+            )
+        )
+        self.tscurves_P.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_power.plot(pen=pen_5, name="Turbine #5"),
+            )
+        )
+        self.tscurves_P.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_power.plot(pen=pen_6, name="Turbine #6"),
+            )
+        )
 
         self.tscurves_E: list[ThreadSafeCurve] = []
         """List of all ThreadSafeCurves for plotting the energy [J]"""
@@ -274,6 +296,24 @@ class MainWindow(QtWid.QWidget):
             HistoryChartCurve(
                 capacity=CHART_CAPACITY,
                 linked_curve=self.pi_energy.plot(pen=pen_3, name="Turbine #3"),
+            )
+        )
+        self.tscurves_E.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_energy.plot(pen=pen_4, name="Turbine #4"),
+            )
+        )
+        self.tscurves_E.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_energy.plot(pen=pen_5, name="Turbine #5"),
+            )
+        )
+        self.tscurves_E.append(
+            HistoryChartCurve(
+                capacity=CHART_CAPACITY,
+                linked_curve=self.pi_energy.plot(pen=pen_6, name="Turbine #6"),
             )
         )
 
@@ -335,9 +375,15 @@ class MainWindow(QtWid.QWidget):
         self.P_1 = QtWid.QLineEdit(**p)
         self.P_2 = QtWid.QLineEdit(**p)
         self.P_3 = QtWid.QLineEdit(**p)
+        self.P_4 = QtWid.QLineEdit(**p)
+        self.P_5 = QtWid.QLineEdit(**p)
+        self.P_6 = QtWid.QLineEdit(**p)
         self.E_1 = QtWid.QLineEdit(**p)
         self.E_2 = QtWid.QLineEdit(**p)
         self.E_3 = QtWid.QLineEdit(**p)
+        self.E_4 = QtWid.QLineEdit(**p)
+        self.E_5 = QtWid.QLineEdit(**p)
+        self.E_6 = QtWid.QLineEdit(**p)
         self.qpbt_running = controls.create_Toggle_button(
             "Running", checked=True
         )
@@ -369,6 +415,15 @@ class MainWindow(QtWid.QWidget):
         grid.addWidget(QtWid.QLabel("#3")      , i, 0)
         grid.addWidget(self.P_3                , i, 1)
         grid.addWidget(self.E_3                , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("#4")      , i, 0)
+        grid.addWidget(self.P_4                , i, 1)
+        grid.addWidget(self.E_4                , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("#5")      , i, 0)
+        grid.addWidget(self.P_5                , i, 1)
+        grid.addWidget(self.E_5                , i, 2); i+=1
+        grid.addWidget(QtWid.QLabel("#6")      , i, 0)
+        grid.addWidget(self.P_6                , i, 1)
+        grid.addWidget(self.E_6                , i, 2); i+=1
 
         grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         # fmt: on
@@ -468,9 +523,15 @@ class MainWindow(QtWid.QWidget):
             self.P_1.setText(f"{np.mean(state.P_1):.2f}")
             self.P_2.setText(f"{np.mean(state.P_2):.2f}")
             self.P_3.setText(f"{np.mean(state.P_3):.2f}")
+            self.P_4.setText(f"{np.mean(state.P_4):.2f}")
+            self.P_5.setText(f"{np.mean(state.P_5):.2f}")
+            self.P_6.setText(f"{np.mean(state.P_6):.2f}")
             self.E_1.setText(f"{state.E_1[-1]:.3f}")
             self.E_2.setText(f"{state.E_2[-1]:.3f}")
             self.E_3.setText(f"{state.E_3[-1]:.3f}")
+            self.E_4.setText(f"{state.E_4[-1]:.3f}")
+            self.E_5.setText(f"{state.E_5[-1]:.3f}")
+            self.E_6.setText(f"{state.E_6[-1]:.3f}")
 
             if DEBUG:
                 tprint("update_chart")
@@ -538,9 +599,15 @@ if __name__ == "__main__":
         window.tscurves_P[0].extendData(ard.state.time, ard.state.P_1)
         window.tscurves_P[1].extendData(ard.state.time, ard.state.P_2)
         window.tscurves_P[2].extendData(ard.state.time, ard.state.P_3)
+        window.tscurves_P[3].extendData(ard.state.time, ard.state.P_4)
+        window.tscurves_P[4].extendData(ard.state.time, ard.state.P_5)
+        window.tscurves_P[5].extendData(ard.state.time, ard.state.P_6)
         window.tscurves_E[0].extendData(ard.state.time, ard.state.E_1)
         window.tscurves_E[1].extendData(ard.state.time, ard.state.E_2)
         window.tscurves_E[2].extendData(ard.state.time, ard.state.E_3)
+        window.tscurves_E[3].extendData(ard.state.time, ard.state.E_4)
+        window.tscurves_E[4].extendData(ard.state.time, ard.state.E_5)
+        window.tscurves_E[5].extendData(ard.state.time, ard.state.E_6)
 
         # Add readings to the log
         log.update()
@@ -570,7 +637,10 @@ if __name__ == "__main__":
             "time [s]\t"
             "P_1 [mW]\tE_1 [J]\t"
             "P_2 [mW]\tE_2 [J]\t"
-            "P_3 [mW]\tE_3 [J]\n"
+            "P_3 [mW]\tE_3 [J]\t"
+            "P_4 [mW]\tE_4 [J]\t"
+            "P_5 [mW]\tE_5 [J]\t"
+            "P_6 [mW]\tE_6 [J]\n"
         )
 
     def write_data_to_log():
@@ -583,9 +653,19 @@ if __name__ == "__main__":
                 ard.state.E_2,
                 ard.state.P_3,
                 ard.state.E_3,
+                ard.state.P_4,
+                ard.state.E_4,
+                ard.state.P_5,
+                ard.state.E_5,
+                ard.state.P_6,
+                ard.state.E_6,
             )
         )
-        log.np_savetxt(np_data, "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f")
+        log.np_savetxt(
+            np_data,
+            "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t"
+            "%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f",
+        )
 
     log = FileLogger(
         write_header_function=write_header_to_log,
