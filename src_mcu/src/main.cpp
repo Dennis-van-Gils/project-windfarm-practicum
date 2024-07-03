@@ -18,7 +18,7 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 28-06-2024
+Dennis van Gils, 03-07-2024
 */
 
 #include <Arduino.h>
@@ -27,16 +27,12 @@ Dennis van Gils, 28-06-2024
 #include "Adafruit_NeoPixel.h"
 #include "DvG_SerialCommand.h"
 
-// INA228 current sensors
-Adafruit_INA228 ina228_sensors[] = {
-    Adafruit_INA228(),
-    Adafruit_INA228(),
-    Adafruit_INA228(),
-};
+// INA228 current sensors: I2C addresses
+const uint8_t ina228_addresses[] = {0x40, 0x41, 0x44, 0x45, 0x43, 0x4c};
 
-// INA228 I2C addresses
-uint8_t ina228_addresses[] = {0x40, 0x41, 0x44};
-// uint8_t ina228_addresses[] = {0x43, 0x45, 0x4c};
+// INA228 current sensors
+const size_t N_sensors = sizeof(ina228_addresses) / sizeof(ina228_addresses[0]);
+Adafruit_INA228 ina228_sensors[N_sensors];
 
 // [Ohm] Shunt resistor internal to Adafruit INA228
 const float R_SHUNT = 0.015;
@@ -146,6 +142,7 @@ void setup() {
   uint8_t i = 0;
   for (auto &ina228 : ina228_sensors) {
     uint8_t i2c_address = ina228_addresses[i];
+
     if (!ina228.begin(i2c_address, &Wire, SKIP_RESET)) {
       Ser.print("Couldn't find INA228 chip at address 0x");
       Ser.println(i2c_address, HEX);
