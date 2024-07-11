@@ -1,12 +1,13 @@
-numpy~=1.21
+numpy>=1.15,<3.0
+psutil
 pyopengl~=3.1
 pyside6
-qtpy
 qtawesome
+qtpy
 
-dvg-debug-functions~=2.4
-dvg-devices~=1.4
-dvg-pyqt-controls~=1.4
-dvg-pyqt-filelogger~=1.3
-dvg-pyqtgraph-threadsafe~=3.3
-dvg-qdeviceio~=1.4
+dvg-debug-functions~=2.5
+dvg-devices~=1.5
+dvg-pyqt-controls~=1.5
+dvg-pyqt-filelogger~=1.4
+dvg-pyqtgraph-threadsafe~=3.4
+dvg-qdeviceio~=1.6
