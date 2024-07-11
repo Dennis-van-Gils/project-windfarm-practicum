@@ -6,7 +6,7 @@ Arduino programmed as a wind turbine.
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "03-07-2024"
+__date__ = "11-07-2024"
 __version__ = "1.0"
 # pylint: disable=missing-docstring
 
@@ -208,8 +208,6 @@ class WindTurbineArduino(Arduino):
         self.state.E_6.append(E_6)
         self.state.P_6.append(P_6)
 
-        print(f"{V_1:+5.0f} mV | {I_1:+6.2f} mA | {P_1:6.3f} mW")
-
         return True
 
     # --------------------------------------------------------------------------
@@ -240,10 +238,7 @@ class WindTurbineArduino(Arduino):
                 break
 
             if not isinstance(line, str):
-                pft(
-                    "ERROR: Data received from the Arduino was not an ASCII "
-                    "string."
-                )
+                pft("Data received from the Arduino was not an ASCII string.")
                 break
 
             if not self.parse_readings(line):
