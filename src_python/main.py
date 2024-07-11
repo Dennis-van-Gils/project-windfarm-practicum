@@ -5,7 +5,7 @@
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "21-06-2024"
+__date__ = "11-07-2024"
 __version__ = "1.0"
 # pylint: disable=missing-function-docstring, unnecessary-lambda
 # pylint: disable=multiple-statements
@@ -684,6 +684,24 @@ if __name__ == "__main__":
     #   Program termination routines
     # --------------------------------------------------------------------------
 
+    @Slot()
+    def notify_connection_lost():
+        stop_running()
+
+        window.qlbl_title.setText("! ! !    LOST CONNECTION    ! ! !")
+        str_cur_date, str_cur_time = current_date_time_strings()
+        str_msg = f"{str_cur_date} {str_cur_time}\nLost connection to Arduino."
+        print(f"\nCRITICAL ERROR @ {str_msg}")
+        reply = QtWid.QMessageBox.warning(
+            window,
+            "CRITICAL ERROR",
+            str_msg,
+            QtWid.QMessageBox.StandardButton.Ok,
+        )
+
+        if reply == QtWid.QMessageBox.StandardButton.Ok:
+            pass  # Leave the GUI open for read-only inspection by the user
+
     def stop_running():
         app.processEvents()
         log.close()
@@ -702,6 +720,7 @@ if __name__ == "__main__":
     window = MainWindow(qdev=ard_qdev, qlog=log)
     window.show()
 
+    ard_qdev.signal_connection_lost.connect(notify_connection_lost)
     ard_qdev.start()
     ard_qdev.unpause_DAQ()
 
