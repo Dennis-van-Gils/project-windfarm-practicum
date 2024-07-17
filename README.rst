@@ -11,23 +11,28 @@ Wind farm practicum
 *This project is part of the minor course "Sustainable Energy" of the University of Twente, The Netherlands, hosted by the Physics of Fluids and the Engineering Fluid Dynamics research groups.*
 
 It involves a practicum on wind farm dynamics, where up to 6 scale model wind
-turbines of 1:87 scale will be placed in the wind tunnel facility. The
-electrical power output of each turbine will be monitored and logged over time.
-The goal for the students is to investigate different spatial distributions of
-the turbines and how their down-wind wakes can affect each other.
-
-concerns an Arduino powered controller with a graphical user-interface in Python to ....
+turbines of 1:87 scale will be placed in a wind tunnel facility. The electrical
+power output and accumulated energy of each turbine - here, a DC motor used as a
+dynamo - will be monitored and logged over time by an Arduino with a graphical
+user interface programmed in Python. The goal for the students is to investigate
+different grid layouts of the turbines and how their down-wind wakes can affect
+each other.
 
 - Github: https://github.com/Dennis-van-Gils/project-windfarm-practicum
 
-.. image:: https://raw.githubusercontent.com/Dennis-van-Gils/project-windfarm-practicum/master/screenshot.png
-
+.. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/photos/full_setup_2.jpg
 
 Hardware
 ========
 * 1x Microcontroller: Adafruit #3800 - Adafruit ItsyBitsy M4 Express (ATSAMD51 Cortex M4)
 * 6x Power monitor: Adafruit #5832 - Adafruit INA228 I2C 85V, 20-bit High or Low Side Power Monitor
 * 6x Scale model wind turbine: Sol Expert 40004 H0 (1:87 scale)
+
+The electronic diagram can be found at
+`docs/electronic_diagram.pdf <https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/electronic_diagram.pdf>`_.
+
+Photos of the circuit board can be found at
+`docs/photos <https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/photos>`_.
 
 Instructions
 ============
@@ -78,6 +83,6 @@ LED status lights
 
 The RGB LED of the ItsyBitsy M4 will indicate its status:
 
-* Blue : We're setting up
+* Blue : Setting up microcontroller
 * Green: All okay and idling
 * Orange: Acquiring and sending data
