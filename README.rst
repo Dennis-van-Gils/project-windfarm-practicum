@@ -22,6 +22,8 @@ each other.
 
 .. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/photos/full_setup_2.jpg
 
+.. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/screenshots/screenshot.png
+
 Hardware
 ========
 * 1x Microcontroller: Adafruit #3800 - Adafruit ItsyBitsy M4 Express (ATSAMD51 Cortex M4)
