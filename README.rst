@@ -28,6 +28,7 @@ Hardware
 ========
 * 1x Microcontroller: Adafruit #3800 - Adafruit ItsyBitsy M4 Express (ATSAMD51 Cortex M4)
 * 6x Power monitor: Adafruit #5832 - Adafruit INA228 I2C 85V, 20-bit High or Low Side Power Monitor
+* 2x Stemma QT 5 Port Hub: Adafruit 5625
 * 6x Scale model wind turbine: Sol Expert 40004 H0 (1:87 scale)
 
 The electronic diagram can be found at
