@@ -1,0 +1,145 @@
+By Dennis van Gils
+All runs are wired as follows: (Port) 123456 = (Turbine) ABCDEF
+
+
+240724_105552
+=============
+Purpose    : Very first test
+Tunnel freq: 5 Hz
+Layout     :
+  D - 222 mm - E - 222 mm -  F
+               |
+             620 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+
+             ^ ^ ^
+             | | |
+             wind
+
+Angle attack: All full on wind
+
+240724_110653
+=============
+Purpose    : Determine comfortable max wind speed and test interchangeability of turbines
+Tunnel freq: 5 Hz, 10 Hz and 12 Hz
+Layout:
+  D - 222 mm - E - 222 mm - C
+               |
+             620 mm
+               |
+  B - 222 mm - A - 222 mm - F
+
+             ^ ^ ^
+             | | |
+             wind
+
+Angle attack: All full on wind
+Notes during acquisition:
+  10 Hz shows mechanical oscillations, probably eigen-frequency is being hit of wind turbines. 12 Hz is fine again without oscillations.
+
+240724_112614
+=============
+Purpose    : Proper base-line measurement
+Tunnel freq: 12 Hz
+Layout     :
+  D - 222 mm - E - 222 mm -  F
+               |
+             620 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+  
+             ^ ^ ^
+             | | |
+             wind
+  
+Angle attack: All full on wind
+
+240724_112938
+=============
+Purpose    : Test effect angle of attack first row
+Tunnel freq: 5 Hz, 12 Hz
+Layout     :
+  D - 222 mm - E - 222 mm -  F
+               |
+             620 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+
+             ^ ^ ^
+             | | |
+             wind
+
+Angle attack: ABC 20 degrees, DEF full on wind
+
+240724_113805
+=============
+Purpose    : Double distance of back row
+Tunnel freq: 12 Hz
+Layout     :
+  D - 222 mm - E - 222 mm -  F
+               |
+            2*620 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+
+             ^ ^ ^
+             | | |
+             wind
+
+Angle attack: ABC 20 degrees, DEF full on wind
+
+240724_114232
+=============
+Purpose    : Double distance of back row, all head on
+Tunnel freq: 12 Hz
+Layout     :
+  D - 222 mm - E - 222 mm -  F
+               |
+            2*620 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+
+             ^ ^ ^
+             | | |
+             wind
+
+Angle attack: All full on wind
+
+240724_114538
+=============
+Pupose     : 1.5x distance of back row
+Tunnel freq: 12 Hz
+Layout     :
+  D - 222 mm - E - 222 mm -  F
+               |
+             930 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+
+             ^ ^ ^
+             | | |
+             wind
+  
+Angle attack: All full on wind
+
+240724_115119
+=============
+Purpose    : Triangular arrangement
+Tunnel freq: 12 Hz
+Layout     :
+               E
+               |
+             620 mm
+               |
+        D  - 248 mm -  F
+               |
+             620 mm
+               |
+  A - 222 mm - B - 222 mm -  C
+
+             ^ ^ ^
+             | | |
+             wind
+
+Angle attack: All full on wind
