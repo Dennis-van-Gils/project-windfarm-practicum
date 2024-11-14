@@ -1,34 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """PyQt/PySide module to provide multithreaded communication and periodical data
-acquisition for an Arduino programmed as a wind turbine.
+acquisition for an Arduino programmed as a wind farm, interfacing multiple
+wind turbines at once.
 """
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "10-06-2024"
-__version__ = "1.0"
+__date__ = "14-11-2024"
+__version__ = "2.0"
 # pylint: disable=missing-docstring
 
 from typing import Callable
 
 from dvg_qdeviceio import QDeviceIO, DAQ_TRIGGER
-from WindTurbineArduino import WindTurbineArduino
+from WindFarmArduino import WindFarmArduino
 
 
-class WindTurbine_qdev(QDeviceIO):
+class WindFarm_qdev(QDeviceIO):
     """Manages multithreaded communication and periodical data acquisition for
-    an Arduino programmed as a wind turbine."""
+    an Arduino programmed as a wind farm, interfacing multiple wind turbines at
+    once."""
 
     def __init__(
         self,
-        dev: WindTurbineArduino,
+        dev: WindFarmArduino,
         DAQ_function: Callable[[], bool],
         debug=False,
         **kwargs,
     ):
         super().__init__(dev, **kwargs)  # Pass kwargs onto QtCore.QObject()
-        self.dev: WindTurbineArduino  # Enforce type: removes `_NoDevice()`
+        self.dev: WindFarmArduino  # Enforce type: removes `_NoDevice()`
 
         self.create_worker_DAQ(
             DAQ_trigger=DAQ_TRIGGER.CONTINUOUS,

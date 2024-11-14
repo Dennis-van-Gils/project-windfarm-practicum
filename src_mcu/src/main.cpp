@@ -1,5 +1,5 @@
 /*
-Arduino Wind Turbine
+Arduino Wind Farm
 
 Part of the 'Wind farm practicum' for the 'Sustainable Energy' course of the
 University of Twente.
@@ -18,7 +18,7 @@ Wind turbine toy model:
   - Sol Expert 40004 H0 Windturbine op zonne-energie
 
 https://github.com/Dennis-van-Gils/project-windfarm-practicum
-Dennis van Gils, 03-07-2024
+Dennis van Gils, 14-11-2024
 */
 
 #include <Arduino.h>
@@ -219,7 +219,7 @@ void loop() {
       strCmd = sc.getCmd();
 
       if (strcmp(strCmd, "id?") == 0) {
-        Ser.println("Arduino, Wind Turbine");
+        Ser.println("Arduino, Wind Farm");
         DAQ_running = false;
 
       } else if (strcmp(strCmd, "r") == 0) {

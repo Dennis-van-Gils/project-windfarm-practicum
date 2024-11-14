@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Wind turbine
+"""Main control program and graphical user interface for an Arduino programmed
+as a wind farm. It will log and plot in real-time the generated power and energy
+of each connected wind turbine over time.
 """
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "11-07-2024"
-__version__ = "1.0"
+__date__ = "14-11-2024"
+__version__ = "2.0"
 # pylint: disable=missing-function-docstring, unnecessary-lambda
 # pylint: disable=multiple-statements
 
@@ -32,8 +34,8 @@ from dvg_pyqtgraph_threadsafe import (
 from dvg_pyqt_filelogger import FileLogger
 import dvg_pyqt_controls as controls
 
-from WindTurbineArduino import WindTurbineArduino
-from WindTurbine_qdev import WindTurbine_qdev
+from WindFarmArduino import WindFarmArduino
+from WindFarm_qdev import WindFarm_qdev
 
 # Constants
 CHART_CAPACITY = int(1e4)  # [number of points]
@@ -88,7 +90,7 @@ def current_date_time_strings():
 class MainWindow(QtWid.QWidget):
     def __init__(
         self,
-        qdev: WindTurbine_qdev,
+        qdev: WindFarm_qdev,
         qlog: FileLogger,
         parent=None,
         **kwargs,
@@ -103,7 +105,7 @@ class MainWindow(QtWid.QWidget):
         """Update the GUI elements corresponding to the Arduino readings, like
         textboxes and charts?"""
 
-        self.setWindowTitle("Arduino wind turbine")
+        self.setWindowTitle("Arduino Wind Farm")
         self.setGeometry(40, 60, 960, 660)
         self.setStyleSheet(controls.SS_TEXTBOX_READ_ONLY + controls.SS_GROUP)
 
@@ -127,7 +129,7 @@ class MainWindow(QtWid.QWidget):
         vbox_left.addWidget(self.qlbl_DAQ_rate_2, stretch=0)
 
         # Middle box
-        self.qlbl_title = QtWid.QLabel("Arduino wind turbine")
+        self.qlbl_title = QtWid.QLabel("Arduino Wind Farm")
         self.qlbl_title.setFont(
             QtGui.QFont(
                 "Palatino",
@@ -199,13 +201,13 @@ class MainWindow(QtWid.QWidget):
             "font-size": "20pt" if USE_LARGER_TEXT else "10pt",
         }
 
-        self.pi_power: pg.PlotItem = self.gw.addPlot(row=0, col=0)
+        self.pi_power: pg.PlotItem = self.gw.addPlot(row=0, col=0)  # type: ignore
         self.pi_power.setLabel("left", text="power : P (mW)", **p)
-        self.pi_power.setYRange(0, 6)
+        self.pi_power.setYRange(0, 6)  # type: ignore
 
-        self.pi_energy: pg.PlotItem = self.gw.addPlot(row=1, col=0)
+        self.pi_energy: pg.PlotItem = self.gw.addPlot(row=1, col=0)  # type: ignore
         self.pi_energy.setLabel("left", text="energy : E (J)", **p)
-        self.pi_energy.enableAutoRange(axis="y")
+        self.pi_energy.enableAutoRange(axis="y")  # type: ignore
 
         self.pi_all = [self.pi_power, self.pi_energy]
         # List of all PlotItems
@@ -229,13 +231,15 @@ class MainWindow(QtWid.QWidget):
         #   Create history charts
         # -------------------------
 
+        # fmt: off
         pen_width = 5
-        pen_1 = pg.mkPen(color=controls.COLOR_PEN_RED, width=pen_width)
-        pen_2 = pg.mkPen(color=controls.COLOR_PEN_ORANGE, width=pen_width)
-        pen_3 = pg.mkPen(color=controls.COLOR_PEN_YELLOW, width=pen_width)
-        pen_4 = pg.mkPen(color=controls.COLOR_PEN_GREEN, width=pen_width)
-        pen_5 = pg.mkPen(color=controls.COLOR_PEN_TURQUOISE, width=pen_width)
-        pen_6 = pg.mkPen(color=controls.COLOR_PEN_BLUE, width=pen_width)
+        pen_1 = pg.mkPen(color=[255,  20,  20], width=pen_width)
+        pen_2 = pg.mkPen(color=[255, 127,  39], width=pen_width)
+        pen_3 = pg.mkPen(color=[255, 255,  90], width=pen_width)
+        pen_4 = pg.mkPen(color=[  0, 200,   0], width=pen_width)
+        pen_5 = pg.mkPen(color=[  0, 255, 255], width=pen_width)
+        pen_6 = pg.mkPen(color=[  0, 130, 255], width=pen_width)
+        # fmt: on
 
         self.tscurves_P: list[ThreadSafeCurve] = []
         """List of all ThreadSafeCurves for plotting the power [mW]"""
@@ -560,7 +564,7 @@ if __name__ == "__main__":
     #   Connect to Arduino
     # --------------------------------------------------------------------------
 
-    ard = WindTurbineArduino(ring_buffer_capacity=15)
+    ard = WindFarmArduino(ring_buffer_capacity=15)
     ard.auto_connect()
     ard.turn_on()
 
@@ -622,7 +626,7 @@ if __name__ == "__main__":
 
         return True
 
-    ard_qdev = WindTurbine_qdev(
+    ard_qdev = WindFarm_qdev(
         dev=ard,
         DAQ_function=DAQ_function,
         debug=DEBUG,

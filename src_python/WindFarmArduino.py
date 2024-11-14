@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Provides class `WindTurbineArduino` to manage serial communication with an
-Arduino programmed as a wind turbine.
+"""Provides class `WindFarmArduino` to manage serial communication with an
+Arduino programmed as a wind farm, interfacing multiple wind turbines at once.
 """
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
 __url__ = "https://github.com/Dennis-van-Gils/project-windfarm-practicum"
-__date__ = "11-07-2024"
-__version__ = "1.0"
+__date__ = "14-11-2024"
+__version__ = "2.0"
 # pylint: disable=missing-docstring
 
 import serial
@@ -18,12 +18,12 @@ from dvg_debug_functions import print_fancy_traceback as pft
 from dvg_ringbuffer import RingBuffer
 
 
-class WindTurbineArduino(Arduino):
+class WindFarmArduino(Arduino):
     """Manages serial communication with an Arduino programmed as a wind
-    turbine."""
+    farm."""
 
     class State:
-        """Container for the measurement values of the wind turbine Arduino."""
+        """Container for the measurement values of the wind farm Arduino."""
 
         def __init__(self, capacity):
             self.capacity = capacity
@@ -103,7 +103,7 @@ class WindTurbineArduino(Arduino):
         self,
         name="Ard",
         long_name="Arduino",
-        connect_to_specific_ID="Wind Turbine",
+        connect_to_specific_ID="Wind Farm",
         ring_buffer_capacity: int = 15,
     ):
         super().__init__(
