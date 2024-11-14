@@ -1,3 +1,4 @@
+matplotlib
 numpy>=1.15,<3.0
 psutil
 pyopengl~=3.1
