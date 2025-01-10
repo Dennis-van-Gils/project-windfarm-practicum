@@ -1,0 +1,152 @@
+.. image:: https://img.shields.io/github/v/release/Dennis-van-Gils/project-windfarm-practicum
+    :target: https://github.com/Dennis-van-Gils/project-windfarm-practicum
+    :alt: Latest release
+
+Data analysis for the wind farm practicum
+=========================================
+*This project is part of the minor course "Sustainable Energy" of the University of Twente, The Netherlands, hosted by the Physics of Fluids and the Engineering Fluid Dynamics research groups.*
+
+This folder contains the Python scripts for reading in the log files as acquired
+by the Arduino microcontroller board of the
+`Wind Farm Practicum <https://github.com/Dennis-van-Gils/project-windfarm-practicum>`_.
+A demo is provided to show how you can read in a single log file, calculate
+some basic statistics from the data and have it plot to a figure on screen and
+saved to disk.
+
+If you are not comfortable using Python for your data analysis, feel free to use
+*Matlab* or any other data processing and graphing software. This readme only
+focusses on Python.
+
+Instructions
+============
+Download the `zip file <https://github.com/Dennis-van-Gils/project-windfarm-practicum/raw/refs/heads/main/data_analysis/windfarm_data_analysis.zip>`_
+containing the data analysis scripts and unpack to a folder onto your drive.
+
+Prerequisites
+~~~~~~~~~~~~~
+
+- Python for Windows
+
+    Install a Python distribution, preferably Anaconda full or Miniconda. Get them from:
+
+    * `Anaconda <https://www.anaconda.com/download>`_
+    * `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
+
+    If you have finished the Python installation you should have a new start
+    menu item called *Anaconda Prompt*. Start it and a console window opens up.
+
+    The console will look something like:
+
+      ::
+
+        (base) C:\Users\[user name]>
+
+    Now run the following to install the necessary packages. *This is only
+    needed once*:
+
+        ::
+
+            conda install numpy matplotlib
+
+    Afterwards, navigate to the folder you just unzipped onto your drive.
+
+    Tip:
+      - Command ``dir`` will show you the current folder contents.
+      - Command ``cd [folder name]`` will navigate into a subfolder.
+      - Command ``cd ..`` will navigate one folder up.
+      - Changing to another drive is done by entering ``[drive letter]:``
+
+    Now you're ready to start the demo by running:
+
+        ::
+
+            python demo.py
+
+- Python for MacOS and Linux
+
+    A native Python interpreter is very likely already present on your OS. If
+    you want you could install Anaconda or Miniconda alongside it without
+    issues. In that case follow the Windows instructions above.
+
+    For the native Python interpreter, run the following to install the
+    necessary packages. *This is only needed once*:
+
+      ::
+
+        pip install numpy matplotlib
+
+    Or, when command `pip` is unknown, run:
+
+      ::
+
+        pip3 install numpy matplotlib
+
+    Afterwards, navigate to the folder you just unzipped onto your drive.
+
+    Tip:
+      - Command ``ls`` will show you the current folder contents.
+      - Command ``cd [folder name]`` will navigate into a subfolder.
+      - Command ``cd ..`` will navigate one folder up.
+      - Changing to another drive is done by entering ``[drive letter]:``
+
+    Now you're ready to start the demo by running:
+
+        ::
+
+            python3 demo.py
+
+Demo
+====
+
+The demo will show and save the following graphs to disk:
+
+.. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/data_analysis/demo_log_fig_1.png
+.. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/data_analysis/demo_log_fig_2.png
+
+How to do you own data analysis
+===============================
+
+Make a copy of ``demo.py`` and adjust this copy to fit your data analysis needs.
+
+In ``demo.py`` you'll see the line:
+
+  ::
+
+    data_1 = WindFarmData("demo_log.txt")
+
+The ``data_1`` object contains *fields* - technically called attributes - that
+you should use for your further data analysis. The attributes are explained
+inside the ``WindFarmData.py`` file. Here is a copy of that documentation:
+
+.. code-block:: python
+
+    class WindFarmData:
+        """Manages the timeseries logged by the Arduino Wind Farm control program.
+
+        Args:
+            filepath (`pathlib.Path` | `str` | `None`, optional):
+                Path to the log file to open. Opens a file browser when omitted.
+
+        Main attributes:
+            avg_P (`numpy.ndarray[float])`):
+                List of the power average per wind turbine [mW].
+
+            std_P (`numpy.ndarray[float])`):
+                List of the power standard deviation per wind turbine [mW].
+
+            time (`numpy.ndarray[float])`):
+                Time [s]
+
+            P_n (`numpy.ndarray[float])`):
+                Timeseries of the power [mW] generated by turbine `n`, where
+                `1 <= n <= 6`.
+
+            E_n (`numpy.ndarray[float])`):
+                Timeseries of the accumulated energy [J] generated by turbine `n`,
+                where `1 <= n <= 6`.
+
+        Main methods:
+            read_file()
+
+            quick_plot()
+        """
