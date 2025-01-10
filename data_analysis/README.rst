@@ -103,8 +103,8 @@ The demo will show and save the following graphs to disk:
 .. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/data_analysis/demo_log_fig_1.png
 .. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/data_analysis/demo_log_fig_2.png
 
-How to do you own data analysis
-===============================
+How to do your own data analysis
+================================
 
 Make a copy of ``demo.py`` and adjust this copy to fit your data analysis needs.
 
