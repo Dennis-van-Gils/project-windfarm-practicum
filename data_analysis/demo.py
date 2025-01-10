@@ -67,6 +67,7 @@ def plot_power_statistics(my_WFD: WindFarmData):
             marker="o",
             markersize=12,
             color=COLOR_MAP[idx],
+            label=f"Turbine {idx + 1}",
         )
         ax1.errorbar(
             idx + 1,
@@ -80,6 +81,8 @@ def plot_power_statistics(my_WFD: WindFarmData):
     ax1.set_xlabel("Turbine #")
     ax1.set_ylabel("Average power (mW)")
     ax1.grid(True)
+
+    fig.legend(loc="outside right upper")
     plt.tight_layout()
 
     return fig
