@@ -20,7 +20,7 @@ each other.
 
 - Github: https://github.com/Dennis-van-Gils/project-windfarm-practicum
 
-.. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/photos/full_setup_2.jpg
+.. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/photos/250116_Wind_farm_practicum.jpg
 
 .. image:: https://github.com/Dennis-van-Gils/project-windfarm-practicum/blob/main/docs/screenshots/screenshot.png
 
